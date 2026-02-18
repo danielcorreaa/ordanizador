@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador Pessoal - Daniel Aleixo</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Variáveis de Tema */
+        :root[data-theme="light"] {
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --primary: #3b82f6;
+            --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        :root[data-theme="dark"] {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --primary: #60a5fa;
+            --border: #334155;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.3);
+        }
+
+        :root[data-theme="solarized"] {
+            --bg: #fdf6e3;
+            --surface: #eee8d5;
+            --text: #586e75;
+            --primary: #268bd2;
+            --border: #d5c4a1;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+        }
+
+        :root[data-theme="cyberpunk"] {
+            --bg: #000b1e;
+            --surface: #120458;
+            --text: #00fff9;
+            --primary: #ff00ff;
+            --border: #ff00ff;
+            --shadow: 0 0 15px rgba(255, 0, 255, 0.4);
+        }
+
+        :root[data-theme="matrix"] {
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --text: #00ff41;
+            --primary: #008f11;
+            --border: #00ff41;
+            --shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+        }
+
+        :root[data-theme="dracula"] {
+            --bg: #282a36;
+            --surface: #44475a;
+            --text: #f8f8f2;
+            --primary: #bd93f9;
+            --border: #6272a4;
+            --shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--surface);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border);
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /* Tema Selector */
+        .theme-selector {
+            display: flex;
+            gap: 0.5rem;
+            background: var(--bg);
+            padding: 0.3rem;
+            border-radius: 50px;
+            border: 1px solid var(--border);
+        }
+
+        .theme-btn {
+            background: transparent;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0.4rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.6;
+        }
+
+        .theme-btn:hover, .theme-btn.active {
+            opacity: 1;
+            background: var(--primary);
+            color: white;
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logout-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Loader */
+        #loader {
+            display: none;
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Cards Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background-color: var(--surface);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-icon {
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .card-label {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .card-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--surface);
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        .footer-content p {
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .footer-highlight {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            .nav-right {
+                flex-direction: column;
+                width: 100%;
+            }
+            .theme-selector {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>GESTOR PESSOAL</span>
+        </div>
+        
+        <div class="nav-right">
+            <div class="theme-selector">
+                <button class="theme-btn active" onclick="setTheme('light')" title="Light Mode">
+                    <i data-lucide="sun"></i>
+                </button>
+                <button class="theme-btn" onclick="setTheme('dark')" title="Dark Mode">
+                    <i data-lucide="moon"></i>
+                </button>
+                <button class="theme-btn" onclick="setTheme('solarized')" title="Solarized">
+                    <i data-lucide="sunset"></i>
+                </button>
+                <button class="theme-btn" onclick="setTheme('cyberpunk')" title="Cyberpunk">
+                    <i data-lucide="zap"></i>
+                </button>
+                <button class="theme-btn" onclick="setTheme('matrix')" title="Matrix">
+                    <i data-lucide="terminal"></i>
+                </button>
+                <button class="theme-btn" onclick="setTheme('dracula')" title="Dracula">
+                    <i data-lucide="ghost"></i>
+                </button>
+            </div>
+            
+            <button class="logout-btn" onclick="handleLogout()">
+                <i data-lucide="log-out"></i>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <div id="loader">
+            <div class="spinner"></div>
+            <p>Carregando configurações...</p>
+        </div>
+
+        <div id="content-grid" class="grid">
+            <!-- Os cards serão inseridos aqui via JS -->
+        </div>
+
+        <div id="error-message" style="display: none; text-align: center; color: #ef4444; padding: 2rem;">
+            <i data-lucide="alert-circle" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i>
+            <p>Não foi possível conectar à API. Verifique se o servidor local está rodando.</p>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>Um ambiente centralizado para organizar sua rotina e objetivos.</p>
+            <p>Desenvolvido com <i data-lucide="heart" style="width: 14px; height: 14px; color: #ef4444; display: inline;"></i> por 
+                <span class="footer-highlight">Daniel Aleixo Correa</span> em 2026.
+            </p>
+            <p>Lins - SP | <span class="footer-highlight">Personal Manager System v1.0</span></p>
+        </div>
+    </footer>
+
+    <script>
+        // Inicializar ícones do Lucide
+        lucide.createIcons();
+
+        // Configuração do Tema
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            
+            // Atualizar botões ativos
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.getAttribute('onclick').includes(theme)) {
+                    btn.classList.add('active');
+                }
+            });
+
+            // Salvar preferência
+            localStorage.setItem('preferred_theme', theme);
+        }
+
+        // Recuperar tema salvo
+        const savedTheme = localStorage.getItem('preferred_theme') || 'light';
+        setTheme(savedTheme);
+
+        // Logout
+        function handleLogout() {
+            localStorage.removeItem('auth_token');
+            // Simulação de redirecionamento ou refresh
+            window.location.reload();
+        }
+
+        // Funções de API
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        const fetchConfigData = async () => {
+            const loader = document.getElementById('loader');
+            const grid = document.getElementById('content-grid');
+            const errorMsg = document.getElementById('error-message');
+
+            loader.style.display = 'block';
+            grid.innerHTML = '';
+            errorMsg.style.display = 'none';
+
+            try {
+                // Tenta buscar da API (localhost:8080)
+                const response = await fetch('http://localhost:8080/api/project/config/all', {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) throw new Error('Falha na resposta da API');
+                
+                const data = await response.json();
+                renderCards(data);
+
+            } catch (error) {
+                console.error("Erro ao buscar dados:", error);
+                errorMsg.style.display = 'block';
+                
+                // MOCK PARA DEMONSTRAÇÃO (Caso a API esteja offline)
+                const mockData = [
+                    { label: "Projetos", subtitle: "Gerenciamento de tarefas", icon: "briefcase" },
+                    { label: "Finanças", subtitle: "Controle de gastos mensal", icon: "dollar-sign" },
+                    { label: "Saúde", subtitle: "Monitoramento de hábitos", icon: "activity" },
+                    { label: "Configurações", subtitle: "Ajustes do sistema", icon: "settings" }
+                ];
+                renderCards(mockData);
+            } finally {
+                loader.style.display = 'none';
+            }
+        };
+
+        function renderCards(data) {
+            const grid = document.getElementById('content-grid');
+            grid.innerHTML = '';
+
+            data.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // Fallback para ícone caso não venha ou seja inválido
+                const iconName = item.icon || 'box';
+
+                card.innerHTML = `
+                    <div class="card-icon">
+                        <i data-lucide="${iconName}" style="width: 48px; height: 48px;"></i>
+                    </div>
+                    <span class="card-label">${item.label}</span>
+                    <span class="card-subtitle">${item.subtitle}</span>
+                `;
+                grid.appendChild(card);
+            });
+
+            // Re-inicializa ícones nos cards injetados
+            lucide.createIcons();
+        }
+
+        // Carregar dados ao iniciar
+        window.onload = fetchConfigData;
+
+    </script>
+</body>
+</html>

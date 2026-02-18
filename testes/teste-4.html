@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Manager - Daniel Aleixo</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-body: #f4f7f6;
+            --bg-card: #ffffff;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --primary: #2563eb;
+            --accent: #3b82f6;
+            --border: #e5e7eb;
+            --header-bg: #ffffff;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            --loader-border: #f3f3f3;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #111827;
+            --bg-card: #1f2937;
+            --text-main: #f9fafb;
+            --text-sub: #9ca3af;
+            --primary: #3b82f6;
+            --header-bg: #1f2937;
+            --border: #374151;
+        }
+
+        [data-theme="solarized"] {
+            --bg-body: #fdf6e3;
+            --bg-card: #eee8d5;
+            --text-main: #073642;
+            --text-sub: #586e75;
+            --primary: #268bd2;
+            --header-bg: #eee8d5;
+            --border: #d5c4a1;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-body: #000b1e;
+            --bg-card: #001631;
+            --text-main: #00ff9f;
+            --text-sub: #00d2ff;
+            --primary: #d600ff;
+            --header-bg: #001631;
+            --border: #d600ff;
+        }
+
+        [data-theme="matrix"] {
+            --bg-body: #000000;
+            --bg-card: #050505;
+            --text-main: #00ff41;
+            --text-sub: #008f11;
+            --primary: #00ff41;
+            --header-bg: #000000;
+            --border: #003b00;
+        }
+
+        [data-theme="dracula"] {
+            --bg-body: #282a36;
+            --bg-card: #44475a;
+            --text-main: #f8f8f2;
+            --text-sub: #6272a4;
+            --primary: #bd93f9;
+            --header-bg: #282a36;
+            --border: #6272a4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--header-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 8px;
+        }
+
+        .theme-btn {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .logout-btn {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+
+        /* Container & Layout */
+        main {
+            flex: 1;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        h2 {
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            border-left: 4px solid var(--primary);
+            padding-left: 10px;
+        }
+
+        /* Grid de Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card de Configuração */
+        .config-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .config-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        }
+
+        .config-card .icon-wrapper {
+            background-color: var(--bg-body);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: var(--primary);
+        }
+
+        .config-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .config-card p {
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+
+        /* Card de Projeto (Ativo/Inativo) */
+        .project-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow);
+        }
+
+        .project-status {
+            padding: 0.5rem 1rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            background: var(--border);
+            display: inline-block;
+        }
+
+        .status-active { background-color: #dcfce7; color: #166534; }
+        .status-inactive { background-color: #fee2e2; color: #991b1b; }
+
+        .project-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+
+        .project-type {
+            font-size: 0.8rem;
+            color: var(--primary);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .project-title {
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .project-date {
+            font-size: 0.85rem;
+            color: var(--text-sub);
+        }
+
+        .project-footer {
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-enter {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .btn-toggle-status {
+            background: none;
+            border: 1px solid var(--border);
+            padding: 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        /* Loader */
+        .loader-container {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loader {
+            border: 6px solid var(--loader-border);
+            border-top: 6px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background-color: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .modal-header {
+            margin-bottom: 2rem;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px; right: 15px;
+            cursor: pointer;
+            color: var(--text-sub);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-body);
+            color: var(--text-main);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--header-bg);
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-sub);
+            font-size: 0.9rem;
+        }
+
+        /* Utils */
+        .uppercase { text-transform: uppercase; }
+        .hidden { display: none; }
+        .error-toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ef4444;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            display: none;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+        }
+
+        @media (max-width: 600px) {
+            main { padding: 1rem; }
+            .header-right { gap: 10px; }
+            .theme-selector { display: none; } /* Ocultar em mobile pequeno ou ajustar */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader-container" id="globalLoader">
+        <div class="loader"></div>
+    </div>
+
+    <div id="errorToast" class="error-toast"></div>
+
+    <header>
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Personal Manager</span>
+        </div>
+        <div class="header-right">
+            <div class="theme-selector">
+                <button class="theme-btn" onclick="setTheme('light')" title="Light"><i data-lucide="sun"></i></button>
+                <button class="theme-btn" onclick="setTheme('dark')" title="Dark"><i data-lucide="moon"></i></button>
+                <button class="theme-btn" onclick="setTheme('solarized')" title="Solarized"><i data-lucide="sun-medium"></i></button>
+                <button class="theme-btn" onclick="setTheme('cyberpunk')" title="Cyberpunk"><i data-lucide="zap"></i></button>
+                <button class="theme-btn" onclick="setTheme('matrix')" title="Matrix"><i data-lucide="terminal"></i></button>
+                <button class="theme-btn" onclick="setTheme('dracula')" title="Dracula"><i data-lucide="ghost"></i></button>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">
+                <i data-lucide="log-out"></i>
+                Sair
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Projetos Ativos -->
+        <section id="activeProjectsSection">
+            <h2>Projetos Ativos</h2>
+            <div class="card-grid" id="activeProjectsGrid">
+                <!-- Populado via JS -->
+            </div>
+        </section>
+
+        <!-- Configurações (Tipos de Projeto) -->
+        <section id="configSection">
+            <h2>Novas Configurações</h2>
+            <div class="card-grid" id="configGrid">
+                <!-- Populado via JS -->
+            </div>
+        </section>
+
+        <!-- Projetos Inativos -->
+        <section id="inactiveProjectsSection">
+            <h2>Histórico de Inativos</h2>
+            <div class="card-grid" id="inactiveProjectsGrid">
+                <!-- Populado via JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Mudança -->
+    <div id="modalMudanca" class="modal">
+        <div class="modal-content">
+            <i data-lucide="x" class="close-modal" onclick="closeModals()"></i>
+            <div class="modal-header">
+                <h3>Novo Projeto de Mudança</h3>
+            </div>
+            <form id="formMudanca">
+                <div class="form-group">
+                    <label>DESCRIÇÃO DA MUDANÇA</label>
+                    <input type="text" id="m_title" class="uppercase" required placeholder="EX: MUDANÇA PARA O NOVO APTO">
+                </div>
+                <div class="form-group">
+                    <label>DATA DA MUDANÇA</label>
+                    <input type="date" id="m_date" required>
+                </div>
+                <div class="form-group">
+                    <label>ORÇAMENTO PREVISTO (R$)</label>
+                    <input type="number" step="0.01" id="m_budget" required placeholder="0,00">
+                </div>
+                <div class="form-group">
+                    <label>IMÓVEL ATUAL</label>
+                    <select id="m_oldHome">
+                        <option value="Apartamento">Apartamento</option>
+                        <option value="Casa">Casa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>IMÓVEL NOVO</label>
+                    <select id="m_newHome">
+                        <option value="Apartamento">Apartamento</option>
+                        <option value="Casa">Casa</option>
+                    </select>
+                </div>
+                <button type="submit" class="submit-btn">SALVAR PROJETO</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Viagem -->
+    <div id="modalViagem" class="modal">
+        <div class="modal-content">
+            <i data-lucide="x" class="close-modal" onclick="closeModals()"></i>
+            <div class="modal-header">
+                <h3>Novo Projeto de Viagem</h3>
+            </div>
+            <form id="formViagem">
+                <div class="form-group">
+                    <label>DESTINO</label>
+                    <input type="text" id="v_title" class="uppercase" required placeholder="EX: VIAGEM PARA JAPÃO">
+                </div>
+                <div class="form-group">
+                    <label>DATA DA VIAGEM</label>
+                    <input type="date" id="v_date" required>
+                </div>
+                <div class="form-group">
+                    <label>ORÇAMENTO (R$)</label>
+                    <input type="number" step="0.01" id="v_budget" required placeholder="0,00">
+                </div>
+                <button type="submit" class="submit-btn">SALVAR PROJETO</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>Sistema para Gerenciamento Pessoal Inteligente</p>
+        <p>Desenvolvido com excelência por <strong>Daniel Aleixo Correa</strong> em 2026, Lins - SP.</p>
+    </footer>
+
+    <script>
+        // Configurações Globais
+        const API_URL = 'http://localhost:8080/api/project';
+        
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        // UI Handlers
+        const toggleLoader = (show) => {
+            document.getElementById('globalLoader').style.display = show ? 'flex' : 'none';
+        };
+
+        const showError = (msg) => {
+            const toast = document.getElementById('errorToast');
+            toast.textContent = msg;
+            toast.style.display = 'block';
+            setTimeout(() => toast.style.display = 'none', 4000);
+        };
+
+        const handleResponseError = (response) => {
+            if (response.status === 403) {
+                localStorage.removeItem('auth_token');
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error('Erro na requisição. Verifique sua conexão ou permissões.');
+        };
+
+        // Temas
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('user_theme', theme);
+        };
+
+        // Logout
+        const handleLogout = () => {
+            localStorage.removeItem('auth_token');
+            window.location.reload();
+        };
+
+        // Formatação Monetária
+        const formatCurrency = (val) => {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+        };
+
+        // Modais
+        const openModal = (type) => {
+		console.log(type)
+            if (type === 'mudanca') {
+                document.getElementById('modalMudanca').style.display = 'flex';
+            } else if (type === 'viagem') {
+                document.getElementById('modalViagem').style.display = 'flex';
+            }
+        };
+
+        const closeModals = () => {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            document.querySelectorAll('form').forEach(f => f.reset());
+        };
+
+        // Buscar Configurações (Tipos de Projeto)
+        const fetchConfig = async () => {
+            toggleLoader(true);
+            try {
+                const res = await fetch(`${API_URL}/config/all`, { headers: getHeaders() });
+                if (!res.ok) return handleResponseError(res);
+                const data = await res.json();
+                renderConfig(data);
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                toggleLoader(false);
+            }
+        };
+
+        const renderConfig = (configs) => {
+            const grid = document.getElementById('configGrid');
+            grid.innerHTML = '';
+            
+            configs.forEach(conf => {
+                if (!conf.active) return;
+
+                const card = document.createElement('div');
+                card.className = 'config-card';
+                card.onclick = () => openModal(conf.id);
+                
+                // Correção: Ícones Lucide usam nomes simples como 'truck' ou 'plane'
+                let iconName = conf.icon;
+                if (conf.id === 'mudanca') iconName = 'truck';
+                if (conf.id === 'viagem') iconName = 'plane';
+
+                card.innerHTML = `
+                    <div class="icon-wrapper">
+                        <i data-lucide="${iconName || 'plus-circle'}"></i>
+                    </div>
+                    <h3>${conf.label}</h3>
+                    <p>${conf.subtitle || ''}</p>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        };
+
+        // Buscar Projetos do Usuário
+        const fetchProjects = async () => {
+            toggleLoader(true);
+            try {
+                const res = await fetch(`${API_URL}/projects`, { headers: getHeaders() });
+                if (!res.ok) return handleResponseError(res);
+                const data = await res.json();
+                renderProjects(data);
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                toggleLoader(false);
+            }
+        };
+
+        const renderProjects = (projects) => {
+            const activeGrid = document.getElementById('activeProjectsGrid');
+            const inactiveGrid = document.getElementById('inactiveProjectsGrid');
+            
+            activeGrid.innerHTML = '';
+            inactiveGrid.innerHTML = '';
+
+            projects.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'project-card';
+                
+                const statusClass = proj.status === 'active' ? 'status-active' : 'status-inactive';
+                const statusLabel = proj.status === 'active' ? 'Ativo' : 'Inativo';
+                const toggleIcon = proj.status === 'active' ? 'eye-off' : 'eye';
+
+                card.innerHTML = `
+                    <div class="project-status ${statusClass}">${statusLabel}</div>
+                    <div class="project-content">
+                        <div class="project-type">${proj.type}</div>
+                        <h4 class="project-title">${proj.title}</h4>
+                        <p class="project-date">Data: ${new Date(proj.date).toLocaleDateString('pt-BR')}</p>
+                        ${proj.extras?.budget ? `<p style="font-weight:bold; margin-top:5px;">${formatCurrency(proj.extras.budget)}</p>` : ''}
+                    </div>
+                    <div class="project-footer">
+                        <button class="btn-enter">Entrar</button>
+                        <button class="btn-toggle-status" onclick="toggleStatus('${proj.id}', '${proj.status}')" title="${proj.status === 'active' ? 'Inativar' : 'Ativar'}">
+                            <i data-lucide="${toggleIcon}"></i>
+                        </button>
+                    </div>
+                `;
+
+                if (proj.status === 'active') {
+                    activeGrid.appendChild(card);
+                } else {
+                    inactiveGrid.appendChild(card);
+                }
+            });
+            lucide.createIcons();
+        };
+
+        // Alterar Status (Patch)
+        const toggleStatus = async (id, currentStatus) => {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            toggleLoader(true);
+            try {
+                const res = await fetch(`${API_URL}/projects/${id}`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (!res.ok) return handleResponseError(res);
+                fetchProjects(); // Recarregar lista
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                toggleLoader(false);
+            }
+        };
+
+        // Salvar Projeto
+        const saveProject = async (payload) => {
+            toggleLoader(true);
+            try {
+                const res = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (!res.ok) return handleResponseError(res);
+                closeModals();
+                fetchProjects();
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                toggleLoader(false);
+            }
+        };
+
+        // Submit Mudança
+        document.getElementById('formMudanca').onsubmit = (e) => {
+            e.preventDefault();
+            const payload = {
+                id: crypto.randomUUID(), // Mock ID if API expects it
+                type: "mudanca",
+                title: document.getElementById('m_title').value.toUpperCase(),
+                date: document.getElementById('m_date').value,
+                status: "active",
+                extras: {
+                    budget: parseFloat(document.getElementById('m_budget').value),
+                    oldHome: document.getElementById('m_oldHome').value,
+                    newHome: document.getElementById('m_newHome').value
+                }
+            };
+            saveProject(payload);
+        };
+
+        // Submit Viagem
+        document.getElementById('formViagem').onsubmit = (e) => {
+            e.preventDefault();
+            const payload = {
+                id: crypto.randomUUID(),
+                type: "viagem",
+                title: document.getElementById('v_title').value.toUpperCase(),
+                date: document.getElementById('v_date').value,
+                status: "active",
+                extras: {
+                    budget: parseFloat(document.getElementById('v_budget').value)
+                }
+            };
+            saveProject(payload);
+        };
+
+        // Inicialização
+        window.onload = () => {
+            lucide.createIcons();
+            const savedTheme = localStorage.getItem('user_theme') || 'light';
+            setTheme(savedTheme);
+            
+            fetchConfig();
+            fetchProjects();
+        };
+
+        // Fechar modal ao clicar fora
+        window.onclick = (event) => {
+            if (event.target.classList.contains('modal')) closeModals();
+        };
+    </script>
+</body>
+</html>

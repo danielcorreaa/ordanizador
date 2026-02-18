@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProManager - Gestão Pessoal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --accent: #3b82f6;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --text-main: #f9fafb;
+            --accent: #60a5fa;
+        }
+
+        [data-theme="solarized"] {
+            --bg-color: #fdf6e3;
+            --card-bg: #eee8d5;
+            --text-main: #657b83;
+            --accent: #268bd2;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-color: #000b1e;
+            --card-bg: #001631;
+            --text-main: #00ff9f;
+            --accent: #ff003c;
+        }
+
+        [data-theme="matrix"] {
+            --bg-color: #0d0208;
+            --card-bg: #000000;
+            --text-main: #00ff41;
+            --accent: #008f11;
+        }
+
+        [data-theme="dracula"] {
+            --bg-color: #282a36;
+            --card-bg: #44475a;
+            --text-main: #f8f8f2;
+            --accent: #bd93f9;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .custom-card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(128, 128, 128, 0.1);
+        }
+
+        .loader {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: var(--accent);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .modal {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+        }
+
+        .hidden { display: none; }
+        
+        input, select, textarea {
+            background-color: rgba(128, 128, 128, 0.05);
+            border: 1px solid rgba(128, 128, 128, 0.2);
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="shadow-md p-4 flex justify-between items-center sticky top-0 z-50 custom-card">
+        <div class="flex items-center gap-2">
+            <i class="fas fa-project-diagram text-2xl text-[var(--accent)]"></i>
+            <span class="font-bold text-xl tracking-tight">PRO<span class="text-[var(--accent)]">MANAGER</span></span>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <div class="flex gap-3 text-lg">
+                <i onclick="setTheme('light')" class="fas fa-sun cursor-pointer hover:text-yellow-500" title="Light"></i>
+                <i onclick="setTheme('dark')" class="fas fa-moon cursor-pointer hover:text-blue-400" title="Dark"></i>
+                <i onclick="setTheme('solarized')" class="fas fa-leaf cursor-pointer hover:text-green-600" title="Solarized"></i>
+                <i onclick="setTheme('cyberpunk')" class="fas fa-bolt cursor-pointer hover:text-pink-500" title="Cyberpunk"></i>
+                <i onclick="setTheme('matrix')" class="fas fa-terminal cursor-pointer hover:text-green-500" title="Matrix"></i>
+                <i onclick="setTheme('dracula')" class="fas fa-vampire cursor-pointer hover:text-purple-500" title="Dracula"></i>
+            </div>
+            <button onclick="logout()" class="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+    </header>
+
+    <main id="app-container" class="flex-grow container mx-auto p-6">
+        
+        <!-- View: Dashboard Principal -->
+        <section id="view-dashboard">
+            <!-- Projetos Ativos -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i class="fas fa-tasks text-blue-500"></i> Projetos Ativos
+                </h2>
+                <div id="loader-ativos" class="flex justify-center py-10 hidden"><div class="loader"></div></div>
+                <div id="lista-projetos-ativos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards de Projetos Ativos injetados aqui -->
+                </div>
+            </div>
+
+            <!-- Cards de Configuração (Novos Projetos) -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold mb-6">Configurar Novo Projeto</h2>
+                <div id="loader-config" class="flex justify-center py-10 hidden"><div class="loader"></div></div>
+                <div id="cards-configuracao" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Cards de Configuração injetados aqui -->
+                </div>
+            </div>
+
+            <!-- Projetos Inativos -->
+            <div class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 opacity-60">Histórico / Inativos</h2>
+                <div id="lista-projetos-inativos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 opacity-70">
+                    <!-- Cards Inativos injetados aqui -->
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Detalhes de Mudança -->
+        <section id="view-mudanca" class="hidden">
+            <button onclick="showDashboard()" class="mb-6 flex items-center gap-2 hover:underline">
+                <i class="fas fa-arrow-left"></i> Voltar ao Dashboard
+            </button>
+            
+            <div id="mudanca-header" class="custom-card p-8 rounded-2xl mb-8 shadow-lg">
+                <!-- Info do Projeto Injetado Aqui -->
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Coluna: Itens Casa Antiga -->
+                <div class="custom-card p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2">Imóvel Antigo</h3>
+                    <div id="lista-itens-antigo" class="space-y-3"></div>
+                </div>
+                <!-- Coluna: Itens Casa Nova -->
+                <div class="custom-card p-6 rounded-xl">
+                    <h3 class="text-xl font-bold mb-4 border-b pb-2 text-[var(--accent)]">Imóvel Novo</h3>
+                    <div id="lista-itens-novo" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- Botão flutuante para adicionar item -->
+            <button onclick="openModalItem()" class="fixed bottom-24 right-8 bg-[var(--accent)] text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition">
+                <i class="fas fa-plus"></i>
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-6 text-center text-sm opacity-60 custom-card mt-auto">
+        <p>Desenvolvido por <strong>Daniel Aleixo Correa</strong> &copy; 2026</p>
+        <p>Lins - SP | Sistema Inteligente para Gerenciamento Pessoal</p>
+    </footer>
+
+    <!-- Modais -->
+    <div id="modal-container" class="fixed inset-0 modal z-[100] flex items-center justify-center hidden">
+        <div id="modal-content" class="custom-card p-8 rounded-2xl w-full max-w-md shadow-2xl relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-xl">&times;</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        const BASE_URL = 'http://localhost:8080/api';
+        let currentProject = null;
+
+        // --- Helpers ---
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+        
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('pref_theme', theme);
+        };
+
+        const logout = () => {
+            localStorage.removeItem('auth_token');
+            window.location.href = 'index.html';
+        };
+
+        const handleApiError = (res) => {
+            if (res.status === 403) {
+                logout();
+                return;
+            }
+            throw new Error('Falha na comunicação com o servidor');
+        };
+
+        const showMessage = (msg, type = 'error') => {
+            const div = document.createElement('div');
+            div.className = `fixed top-20 right-4 p-4 rounded shadow-lg z-[200] ${type === 'error' ? 'bg-red-500' : 'bg-green-500'} text-white`;
+            div.innerText = msg;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 4000);
+        };
+
+        // --- View Navigation ---
+        const showDashboard = () => {
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            document.getElementById('view-mudanca').classList.add('hidden');
+            loadAllData();
+        };
+
+        // --- Data Fetching ---
+        async function loadAllData() {
+            toggleLoader('loader-ativos', true);
+            toggleLoader('loader-config', true);
+            
+            try {
+                // Carregar Configurações (Tipos de projetos disponíveis)
+                const configRes = await fetch(`${BASE_URL}/project/config/all`, { headers: getHeaders() });
+                if (!configRes.ok) handleApiError(configRes);
+                const configs = await configRes.json();
+                renderConfigCards(configs);
+
+                // Carregar Meus Projetos
+                const projectsRes = await fetch(`${BASE_URL}/project/projects`, { headers: getHeaders() });
+                if (!projectsRes.ok) handleApiError(projectsRes);
+                const projects = await projectsRes.json();
+                renderProjects(projects);
+
+            } catch (err) {
+                showMessage(err.message);
+            } finally {
+                toggleLoader('loader-ativos', false);
+                toggleLoader('loader-config', false);
+            }
+        }
+
+        function renderConfigCards(configs) {
+            const container = document.getElementById('cards-configuracao');
+            container.innerHTML = '';
+            configs.filter(c => c.active).forEach(conf => {
+                const card = document.createElement('div');
+                card.className = "custom-card p-8 rounded-xl cursor-pointer hover:shadow-xl transition transform hover:-translate-y-1 text-center";
+                card.onclick = () => openModalCreate(conf.type);
+                card.innerHTML = `
+                    <div class="text-4xl mb-4 text-[var(--accent)]"><i class="${conf.icon || 'fas fa-plus'}"></i></div>
+                    <h3 class="text-xl font-bold">${conf.label}</h3>
+                    <p class="opacity-70 text-sm mt-2">${conf.subtitle || ''}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderProjects(projects) {
+            const ativosContainer = document.getElementById('lista-projetos-ativos');
+            const inativosContainer = document.getElementById('lista-projetos-inativos');
+            ativosContainer.innerHTML = '';
+            inativosContainer.innerHTML = '';
+
+            projects.forEach(p => {
+                const card = document.createElement('div');
+                card.className = `custom-card p-6 rounded-xl flex flex-col justify-between`;
+                
+                const html = `
+                    <div>
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold uppercase tracking-widest px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                                ${p.type === 'mudanca' ? '🏠 Mudança' : '✈️ Viagem'}
+                            </span>
+                            <button onclick="toggleStatus('${p.id}', '${p.status}')" class="text-lg hover:text-red-500">
+                                <i class="fas ${p.status === 'active' ? 'fa-toggle-on' : 'fa-toggle-off'}"></i>
+                            </button>
+                        </div>
+                        <h3 class="text-xl font-bold mb-1">${p.title}</h3>
+                        <p class="text-sm opacity-60"><i class="far fa-calendar-alt mr-1"></i> ${new Date(p.date).toLocaleDateString()}</p>
+                    </div>
+                    <div class="mt-6">
+                        ${p.status === 'active' ? 
+                            `<button onclick="enterProject('${p.id}', '${p.type}')" class="w-full bg-[var(--accent)] text-white py-2 rounded-lg hover:opacity-90 transition">Entrar</button>` 
+                            : `<button onclick="toggleStatus('${p.id}', 'inactive')" class="w-full border border-[var(--accent)] py-2 rounded-lg text-sm">Reativar</button>`
+                        }
+                    </div>
+                `;
+                card.innerHTML = html;
+
+                if (p.status === 'active') {
+                    ativosContainer.appendChild(card);
+                } else {
+                    inativosContainer.appendChild(card);
+                }
+            });
+        }
+
+        async function toggleStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            try {
+                const res = await fetch(`${BASE_URL}/project/projects/${id}`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (!res.ok) handleApiError(res);
+                loadAllData();
+            } catch (err) {
+                showMessage(err.message);
+            }
+        }
+
+        // --- Modal Management ---
+        function openModalCreate(type) {
+            const modalBody = document.getElementById('modal-body');
+            document.getElementById('modal-container').classList.remove('hidden');
+            
+            if (type === 'mudanca') {
+                modalBody.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">Nova Mudança</h2>
+                    <div class="space-y-4">
+                        <div><label class="block text-xs font-bold mb-1">TÍTULO (DESCRIÇÃO)</label>
+                        <input type="text" id="m-title" class="w-full p-2 rounded uppercase" placeholder="Ex: MUDANÇA PARA APARTAMENTO NOVO"></div>
+                        <div><label class="block text-xs font-bold mb-1">DATA</label>
+                        <input type="date" id="m-date" class="w-full p-2 rounded"></div>
+                        <div><label class="block text-xs font-bold mb-1">ORÇAMENTO PREVISTO</label>
+                        <input type="number" id="m-budget" class="w-full p-2 rounded" placeholder="0.00"></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="block text-xs font-bold mb-1">IMÓVEL ATUAL</label>
+                            <select id="m-old" class="w-full p-2 rounded"><option>Apartamento</option><option>Casa</option></select></div>
+                            <div><label class="block text-xs font-bold mb-1">IMÓVEL NOVO</label>
+                            <select id="m-new" class="w-full p-2 rounded"><option>Apartamento</option><option>Casa</option></select></div>
+                        </div>
+                        <button onclick="saveProject('mudanca')" class="w-full bg-green-600 text-white py-3 rounded-xl font-bold mt-4">CADASTRAR</button>
+                    </div>
+                `;
+            } else {
+                modalBody.innerHTML = `
+                    <h2 class="text-2xl font-bold mb-6">Nova Viagem</h2>
+                    <div class="space-y-4">
+                        <div><label class="block text-xs font-bold mb-1">DESTINO</label>
+                        <input type="text" id="v-title" class="w-full p-2 rounded uppercase" placeholder="Ex: PARIS 2026"></div>
+                        <div><label class="block text-xs font-bold mb-1">DATA DA VIAGEM</label>
+                        <input type="date" id="v-date" class="w-full p-2 rounded"></div>
+                        <div><label class="block text-xs font-bold mb-1">ORÇAMENTO</label>
+                        <input type="number" id="v-budget" class="w-full p-2 rounded" placeholder="0.00"></div>
+                        <button onclick="saveProject('viagem')" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold mt-4">CADASTRAR</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function saveProject(type) {
+            const data = {
+                type,
+                status: 'active',
+                title: document.getElementById(type === 'mudanca' ? 'm-title' : 'v-title').value.toUpperCase(),
+                date: document.getElementById(type === 'mudanca' ? 'm-date' : 'v-date').value,
+                extras: {
+                    budget: parseFloat(document.getElementById(type === 'mudanca' ? 'm-budget' : 'v-budget').value) || 0
+                }
+            };
+
+            if (type === 'mudanca') {
+                data.extras.oldHome = document.getElementById('m-old').value;
+                data.extras.newHome = document.getElementById('m-new').value;
+            }
+
+            try {
+                const res = await fetch(`${BASE_URL}/project/projects`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+                });
+                if (!res.ok) handleApiError(res);
+                closeModal();
+                loadAllData();
+                showMessage('Projeto criado com sucesso!', 'success');
+            } catch (err) {
+                showMessage(err.message);
+            }
+        }
+
+        // --- Inner Project View (Mudança) ---
+        async function enterProject(id, type) {
+            if (type !== 'mudanca') {
+                showMessage("Módulo de Viagem em desenvolvimento.", "info");
+                return;
+            }
+            
+            try {
+                // Em um cenário real, buscaríamos os detalhes do projeto e itens
+                const res = await fetch(`${BASE_URL}/project/projects`, { headers: getHeaders() });
+                const projects = await res.json();
+                currentProject = projects.find(p => p.id == id);
+                
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('view-mudanca').classList.remove('hidden');
+                
+                loadItens();
+            } catch (err) {
+                showMessage(err.message);
+            }
+        }
+
+        async function loadItens() {
+            try {
+                const res = await fetch(`${BASE_URL}/itens`, { headers: getHeaders() });
+                if (!res.ok) handleApiError(res);
+                const allItens = await res.json();
+                
+                // Filtra itens deste projeto (regra fictícia baseada no ID)
+                const projectItens = allItens.filter(i => i.idProjeto == currentProject.id);
+                renderProjectDetail(projectItens);
+            } catch (err) {
+                // Mock se a API falhar para demonstração
+                renderProjectDetail([]);
+            }
+        }
+
+        function renderProjectDetail(itens) {
+            const header = document.getElementById('mudanca-header');
+            const totalGasto = itens.reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const budget = currentProject.extras.budget;
+            const saldo = budget - totalGasto;
+            const isEstourado = saldo < 0;
+            
+            const completados = itens.filter(i => i.completed).length;
+            const progresso = itens.length ? Math.round((completados / itens.length) * 100) : 0;
+
+            header.innerHTML = `
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-3xl font-black">${currentProject.title}</h2>
+                        <p class="opacity-70">${currentProject.extras.oldHome} ➔ ${currentProject.extras.newHome}</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-sm font-bold opacity-60">ORÇAMENTO</span>
+                        <p class="text-2xl font-bold">${formatCurrency(budget)}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div class="p-4 rounded-xl bg-gray-100 dark:bg-black/20">
+                        <p class="text-xs font-bold opacity-50">TOTAL GASTO</p>
+                        <p class="text-xl font-bold">${formatCurrency(totalGasto)}</p>
+                    </div>
+                    <div class="p-4 rounded-xl ${isEstourado ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}">
+                        <p class="text-xs font-bold opacity-80">SALDO RESTANTE</p>
+                        <p class="text-xl font-bold">${formatCurrency(saldo)}</p>
+                        ${isEstourado ? '<p class="text-[10px] mt-1 font-bold">⚠️ ORÇAMENTO ESTOURADO!</p>' : ''}
+                    </div>
+                    <div class="p-4 rounded-xl bg-gray-100 dark:bg-black/20">
+                        <p class="text-xs font-bold opacity-50">PROGRESSO</p>
+                        <div class="w-full bg-gray-300 h-2 rounded-full mt-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: ${progresso}%"></div>
+                        </div>
+                        <p class="text-xs mt-1 text-right">${progresso}% concluído</p>
+                    </div>
+                </div>
+            `;
+
+            renderItensList(itens);
+        }
+
+        function renderItensList(itens) {
+            const containerAntigo = document.getElementById('lista-itens-antigo');
+            const containerNovo = document.getElementById('lista-itens-novo');
+            containerAntigo.innerHTML = '';
+            containerNovo.innerHTML = '';
+
+            itens.forEach(item => {
+                const itemEl = document.createElement('div');
+                itemEl.className = "flex justify-between items-center p-3 border-b border-gray-100 dark:border-gray-700 hover:bg-black/5 transition";
+                itemEl.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" ${item.completed ? 'checked' : ''} onclick="toggleItemDone('${item._id}', this.checked)" class="w-5 h-5 cursor-pointer">
+                        <div>
+                            <p class="font-medium ${item.completed ? 'line-through opacity-50' : ''}">${item.name}</p>
+                            <p class="text-xs font-bold text-blue-500">${formatCurrency(item.value)}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editItemValue('${item._id}', ${item.value})" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded"><i class="fas fa-edit"></i></button>
+                        <button class="p-2 text-red-400 hover:bg-red-50 rounded"><i class="fas fa-trash"></i></button>
+                    </div>
+                `;
+
+                if (item.category === 'novo') {
+                    containerNovo.appendChild(itemEl);
+                } else {
+                    containerAntigo.appendChild(itemEl);
+                }
+            });
+        }
+
+        // --- Item Operations ---
+        function openModalItem() {
+            const modalBody = document.getElementById('modal-body');
+            document.getElementById('modal-container').classList.remove('hidden');
+            modalBody.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">Novo Item</h3>
+                <div class="space-y-4">
+                    <input type="text" id="i-name" class="w-full p-2 rounded" placeholder="Descrição (ex: Geladeira)">
+                    <input type="number" id="i-value" class="w-full p-2 rounded" placeholder="Valor (0.00)">
+                    <select id="i-category" class="w-full p-2 rounded">
+                        <option value="antigo">Imóvel Antigo (${currentProject.extras.oldHome})</option>
+                        <option value="novo">Imóvel Novo (${currentProject.extras.newHome})</option>
+                    </select>
+                    <button onclick="addItem()" class="w-full bg-[var(--accent)] text-white py-3 rounded-lg font-bold">Adicionar</button>
+                </div>
+            `;
+        }
+
+        async function addItem() {
+            const name = document.getElementById('i-name').value;
+            const value = parseFloat(document.getElementById('i-value').value) || 0;
+            const category = document.getElementById('i-category').value;
+
+            try {
+                const res = await fetch(`${BASE_URL}/itens`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ name, value, category, idProjeto: currentProject.id })
+                });
+                closeModal();
+                loadItens();
+            } catch (err) { showMessage(err.message); }
+        }
+
+        async function toggleItemDone(id, status) {
+            try {
+                await fetch(`${BASE_URL}/itens/${id}/completed`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ completed: status })
+                });
+                loadItens();
+            } catch (err) { showMessage(err.message); }
+        }
+
+        function editItemValue(id, currentValue) {
+            const modalBody = document.getElementById('modal-body');
+            document.getElementById('modal-container').classList.remove('hidden');
+            modalBody.innerHTML = `
+                <h3 class="text-xl font-bold mb-4">Editar Valor</h3>
+                <div class="space-y-4">
+                    <input type="number" id="edit-val" class="w-full p-2 rounded" value="${currentValue}">
+                    <textarea id="edit-desc" class="w-full p-2 rounded" placeholder="Comentário adicional..."></textarea>
+                    <button onclick="updateItemValue('${id}')" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold">Salvar Alterações</button>
+                </div>
+            `;
+        }
+
+        async function updateItemValue(id) {
+            const val = document.getElementById('edit-val').value;
+            const desc = document.getElementById('edit-desc').value;
+            try {
+                await fetch(`${BASE_URL}/itens/${id}/value`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ value: parseFloat(val), description: desc })
+                });
+                closeModal();
+                loadItens();
+            } catch (err) { showMessage(err.message); }
+        }
+
+        // --- UI Utils ---
+        function toggleLoader(id, show) {
+            const el = document.getElementById(id);
+            if (el) show ? el.classList.remove('hidden') : el.classList.add('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-container').classList.add('hidden');
+        }
+
+        // --- Init ---
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('pref_theme') || 'light';
+            setTheme(savedTheme);
+            
+            // Simulação de Token para desenvolvimento local caso não exista
+            if (!localStorage.getItem('auth_token')) {
+                console.warn("Aviso: auth_token não encontrado. Requisições podem falhar.");
+            }
+            
+            loadAllData();
+        };
+
+    </script>
+</body>
+</html>

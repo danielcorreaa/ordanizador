@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Organizer - Gerenciador de Atividades</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Default Variables (Cyberpunk will override these) */
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --card-bg: #fff;
+            --primary-color: #6200ea;
+            --secondary-color: #03dac6;
+            --danger-color: #ff0266;
+            --success-color: #00e676;
+            --info-color: #2979ff;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --header-bg: #fff;
+        }
+
+        /* Themes */
+        body.theme-light {
+            --bg-color: #f0f2f5;
+            --text-color: #1c1e21;
+            --card-bg: #ffffff;
+            --primary-color: #1877f2;
+            --header-bg: #ffffff;
+        }
+        
+        body.theme-dark {
+            --bg-color: #18191a;
+            --text-color: #e4e6eb;
+            --card-bg: #242526;
+            --primary-color: #2d88ff;
+            --header-bg: #242526;
+        }
+
+        body.theme-solarized {
+            --bg-color: #fdf6e3;
+            --text-color: #657b83;
+            --card-bg: #eee8d5;
+            --primary-color: #b58900;
+            --header-bg: #eee8d5;
+        }
+
+        body.theme-cyberpunk {
+            --bg-color: #050505; /* Quase preto */
+            --text-color: #e0e0e0;
+            --card-bg: #121212;
+            --primary-color: #fcee0a; /* Amarelo Cyberpunk */
+            --secondary-color: #00ff9f;
+            --danger-color: #ff003c;
+            --success-color: #00ff9f;
+            --info-color: #00f0ff; /* Azul Ciano */
+            --header-bg: #000;
+            --box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+            font-family: 'Courier New', Courier, monospace; /* Tech feel */
+        }
+        
+        body.theme-matrix {
+            --bg-color: #000000;
+            --text-color: #00ff00;
+            --card-bg: #0d110d;
+            --primary-color: #008f11;
+            --secondary-color: #003b00;
+            --danger-color: #ff0000;
+            --header-bg: #000;
+        }
+
+        body.theme-dracula {
+            --bg-color: #282a36;
+            --text-color: #f8f8f2;
+            --card-bg: #44475a;
+            --primary-color: #bd93f9;
+            --secondary-color: #50fa7b;
+            --danger-color: #ff5555;
+            --header-bg: #44475a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout Helpers */
+        .container { max-width: 1400px; margin: 0 auto; padding: 20px; width: 100%; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-2 { gap: 10px; }
+        .gap-4 { gap: 20px; }
+        .hidden { display: none !important; }
+        
+        /* Components */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.1s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background-color: var(--primary-color); color: #000; }
+        .btn-danger { background-color: var(--danger-color); color: #fff; }
+        .btn-success { background-color: var(--success-color); color: #000; }
+        .btn-info { background-color: var(--info-color); color: #000; }
+        .btn-outline { border: 1px solid var(--text-color); background: transparent; color: var(--text-color); }
+
+        /* Cyberpunk specific button overrides */
+        body.theme-cyberpunk .btn {
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid transparent;
+        }
+        body.theme-cyberpunk .btn-primary {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            box-shadow: 0 0 5px var(--primary-color);
+        }
+        body.theme-cyberpunk .btn-primary:hover {
+            background: var(--primary-color);
+            color: #000;
+        }
+
+        /* Header */
+        header {
+            background-color: var(--header-bg);
+            padding: 15px 30px;
+            box-shadow: var(--box-shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .user-info { font-size: 0.9em; opacity: 0.8; text-align: right; }
+        .theme-selector i { cursor: pointer; font-size: 1.2rem; margin-left: 10px; transition: color 0.2s; }
+        .theme-selector i:hover { color: var(--primary-color); }
+
+        /* Main Grid */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        /* Left Side - Config */
+        .config-list { display: flex; flex-direction: column; gap: 15px; }
+        .config-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            border: 1px solid transparent;
+            text-align: center;
+        }
+        .config-card:hover { transform: translateY(-3px); border-color: var(--primary-color); }
+        .config-card i { font-size: 2rem; color: var(--primary-color); margin-bottom: 10px; display: block; }
+        .config-card h3 { font-size: 1.1rem; margin-bottom: 5px; }
+        .config-card p { font-size: 0.8rem; opacity: 0.7; }
+
+        /* Right Side - Projects */
+        .projects-section { display: flex; flex-direction: column; gap: 30px; }
+        .project-status-group h2 { 
+            margin-bottom: 15px; 
+            padding-bottom: 5px; 
+            border-bottom: 2px solid var(--text-color); 
+            display: inline-block;
+        }
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .project-card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            border-left: 5px solid gray;
+        }
+        .project-card.status-ACTIVE { border-left-color: var(--success-color); }
+        .project-card.status-FINISHED { border-left-color: var(--info-color); }
+        .project-card.status-INACTIVE { border-left-color: var(--danger-color); }
+
+        .project-card h3 { margin-bottom: 10px; font-size: 1.2rem; }
+        .project-meta { font-size: 0.9rem; opacity: 0.8; margin-bottom: 15px; display: flex; justify-content: space-between; }
+        .project-actions { display: flex; gap: 10px; margin-top: 15px; }
+
+        /* Detail View */
+        #detail-view { width: 100%; }
+        .detail-header {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            margin-bottom: 30px;
+            box-shadow: var(--box-shadow);
+        }
+        .financial-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stat-box {
+            background: rgba(0,0,0,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        body.theme-cyberpunk .stat-box { background: rgba(255,255,255,0.05); border: 1px solid var(--primary-color); }
+
+        .alert-box {
+            background-color: rgba(255, 0, 60, 0.1);
+            color: var(--danger-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            border: 1px solid var(--danger-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+
+        .progress-container {
+            width: 100%;
+            height: 10px;
+            background-color: rgba(128,128,128,0.2);
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--success-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .items-section { margin-top: 30px; }
+        .category-group { margin-bottom: 30px; }
+        .category-title { 
+            font-size: 1.1rem; 
+            margin-bottom: 15px; 
+            color: var(--primary-color); 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(128,128,128,0.2);
+            padding-bottom: 5px;
+        }
+        
+        .item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--card-bg);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+        }
+        .item-row:hover { border-color: var(--primary-color); }
+        .item-row.completed { opacity: 0.6; text-decoration: line-through; }
+        .item-check { margin-right: 15px; transform: scale(1.5); cursor: pointer; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+        .modal {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        body.theme-cyberpunk .modal { border: 1px solid var(--primary-color); box-shadow: 0 0 20px var(--primary-color); }
+        .close-modal { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.2rem; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        body.theme-cyberpunk .form-control { border: 1px solid #333; }
+        body.theme-cyberpunk .form-control:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 5px var(--primary-color); }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            border-top: 1px solid rgba(128,128,128,0.1);
+        }
+
+        /* Loader */
+        #loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 5px solid var(--text-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .main-layout { grid-template-columns: 1fr; }
+            .financial-summary { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body class="theme-cyberpunk">
+
+    <!-- Loader -->
+    <div id="loader" class="hidden">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="container flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <i class="fas fa-boxes fa-2x" style="color: var(--primary-color);"></i>
+                <div>
+                    <h1 style="font-size: 1.5rem;">Organizador Pessoal</h1>
+                    <p style="font-size: 0.8rem; opacity: 0.7;">Gerenciador de Atividades: Mudanças, Viagens e mais.</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="user-info">
+                    <div id="user-name" style="font-weight: bold;">Carregando...</div>
+                    <div id="user-email" style="font-size: 0.8rem;">...</div>
+                </div>
+                
+                <div class="theme-selector">
+                    <i class="fas fa-sun" onclick="setTheme('light')" title="Light"></i>
+                    <i class="fas fa-moon" onclick="setTheme('dark')" title="Dark"></i>
+                    <i class="fas fa-microchip" onclick="setTheme('cyberpunk')" title="Cyberpunk"></i>
+                    <i class="fas fa-code" onclick="setTheme('matrix')" title="Matrix"></i>
+                    <i class="fas fa-vampire" onclick="setTheme('dracula')" title="Dracula"></i>
+                </div>
+
+                <button onclick="logout()" class="btn btn-outline" style="margin-left: 10px;">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container flex-col" style="flex: 1;">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="dashboard-view" class="main-layout">
+            <!-- Left: Configurations -->
+            <aside>
+                <h2 style="margin-bottom: 20px;">Nova Atividade</h2>
+                <div id="config-list" class="config-list">
+                    <!-- Cards de Configuração injetados via JS -->
+                </div>
+            </aside>
+
+            <!-- Right: Projects List -->
+            <main class="projects-section">
+                <div class="project-status-group">
+                    <h2 style="color: var(--success-color);">Ativos</h2>
+                    <div id="list-active" class="projects-grid"></div>
+                </div>
+                
+                <div class="project-status-group">
+                    <h2 style="color: var(--info-color);">Finalizados</h2>
+                    <div id="list-finished" class="projects-grid"></div>
+                </div>
+
+                <div class="project-status-group">
+                    <h2 style="color: var(--danger-color);">Inativos</h2>
+                    <div id="list-inactive" class="projects-grid"></div>
+                </div>
+            </main>
+        </div>
+
+        <!-- DETAIL VIEW -->
+        <div id="detail-view" class="hidden">
+            <button onclick="showDashboard()" class="btn btn-outline" style="margin-bottom: 20px;">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </button>
+
+            <div id="project-detail-content">
+                <!-- Conteúdo do projeto injetado via JS -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>Desenvolvido por Daniel Aleixo Correa em 2026, Lins Sp - Sistema para gerenciamento pessoal.</p>
+    </footer>
+
+    <!-- MODAL: Create Project -->
+    <div id="modal-create" class="modal-overlay hidden">
+        <div class="modal">
+            <span class="close-modal" onclick="closeModal('modal-create')">&times;</span>
+            <h2 id="modal-create-title">Novo Projeto</h2>
+            <form id="form-create-project" style="margin-top: 20px;">
+                <input type="hidden" id="create-type">
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="create-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Data</label>
+                    <input type="date" id="create-date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Valor Estimado (Budget)</label>
+                    <input type="number" id="create-budget" class="form-control" min="1" step="0.01" required>
+                    <small style="color: var(--danger-color); display: none;" id="budget-error">O valor não pode ser zero.</small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Criar Projeto</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit Item Price -->
+    <div id="modal-edit-price" class="modal-overlay hidden">
+        <div class="modal">
+            <span class="close-modal" onclick="closeModal('modal-edit-price')">&times;</span>
+            <h2>Editar Valor</h2>
+            <form id="form-edit-price" style="margin-top: 20px;">
+                <input type="hidden" id="edit-item-id">
+                <div class="form-group">
+                    <label>Novo Valor</label>
+                    <input type="number" id="edit-value" class="form-control" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%;">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- CONSTANTS & CONFIG ---
+        const BASE_API = ["localhost", "127.0.0.1", ""].includes(window.location.hostname)
+            ? "http://localhost:8082/api"
+            : "https://personal-organization.onrender.com/api";
+
+        let currentProjectId = null;
+        let currentProjectCategories = [];
+
+        // --- AUTH & HELPERS ---
+
+        function getHeaders() {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        }
+
+        function showLoader() { document.getElementById('loader').classList.remove('hidden'); }
+        function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
+
+        async function apiRequest(endpoint, method = 'GET', body = null) {
+            showLoader();
+            try {
+                const config = { method, headers: getHeaders() };
+                if (body) config.body = JSON.stringify(body);
+
+                // Normaliza endpoint para evitar barras duplas ou falta delas
+                const url = endpoint.startsWith('http') ? endpoint : `${BASE_API}${endpoint}`;
+                
+                const response = await fetch(url, config);
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = 'index.html';
+                    return null;
+                }
+
+                const data = await response.json().catch(() => ({})); // Trata resposta vazia
+
+                if (!response.ok) {
+                    throw new Error(data.message || `Erro ${response.status}: Falha na requisição`);
+                }
+
+                return data;
+            } catch (error) {
+                alert(error.message);
+                return null;
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // JWT Parser simples para pegar dados do usuário
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('auth_token');
+            const userNameEl = document.getElementById('user-name');
+            const userEmailEl = document.getElementById('user-email');
+
+            if (token) {
+                const user = parseJwt(token);
+                // Se o token tiver campos 'name' ou 'sub' (email), usamos. Senão, placeholder.
+                userNameEl.innerText = user?.name || user?.preferred_username || "Usuário Logado";
+                userEmailEl.innerText = user?.email || user?.sub || "";
+            } else {
+                userNameEl.innerText = "Usuário Anônimo";
+                userEmailEl.innerText = "";
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('auth_token');
+            window.location.href = 'index.html';
+        }
+
+        // --- THEME ---
+        function setTheme(themeName) {
+            document.body.className = `theme-${themeName}`;
+        }
+
+        // --- NAVIGATION ---
+        function showDashboard() {
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('detail-view').classList.add('hidden');
+            currentProjectId = null;
+            loadDashboard();
+        }
+
+        function showDetail(projectId) {
+            document.getElementById('dashboard-view').classList.add('hidden');
+            document.getElementById('detail-view').classList.remove('hidden');
+            currentProjectId = projectId;
+            loadProjectDetail(projectId);
+        }
+
+        // --- MODALS ---
+        function openCreateModal(type, label) {
+            document.getElementById('create-type').value = type;
+            document.getElementById('modal-create-title').innerText = `Nova ${label}`;
+            document.getElementById('create-budget').value = '';
+            document.getElementById('create-title').value = '';
+            document.getElementById('create-date').value = '';
+            document.getElementById('modal-create').classList.remove('hidden');
+        }
+
+        function openEditPriceModal(itemId, currentValue) {
+            document.getElementById('edit-item-id').value = itemId;
+            document.getElementById('edit-value').value = currentValue;
+            document.getElementById('modal-edit-price').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // --- DASHBOARD LOGIC ---
+
+        async function loadConfigCards() {
+            const configs = await apiRequest('/project-types');
+            const container = document.getElementById('config-list');
+            container.innerHTML = '';
+
+            if (configs) {
+                configs.forEach(cfg => {
+                    if (cfg.active) {
+                        const card = document.createElement('div');
+                        card.className = 'config-card';
+                        // Mapear ícones baseados no retorno da API ou usar default
+                        const iconClass = cfg.icon || 'fa-clipboard-list';
+                        
+                        card.innerHTML = `
+                            <i class="fas ${iconClass}"></i>
+                            <h3>${cfg.label}</h3>
+                            <p>${cfg.subtitle || ''}</p>
+                        `;
+                        card.onclick = () => openCreateModal(cfg.key || cfg.type, cfg.label);
+                        container.appendChild(card);
+                    }
+                });
+            }
+        }
+
+        function createProjectCard(project) {
+            const dateFormatted = new Date(project.date).toLocaleDateString('pt-BR');
+            const isInactive = project.status === 'INACTIVE';
+            const isFinished = project.status === 'FINISHED';
+            
+            // Botões de ação baseados no status
+            let actionButtons = '';
+            
+            if (project.status === 'ACTIVE') {
+                actionButtons = `
+                    <button class="btn btn-primary btn-sm" onclick="showDetail('${project.id}')">Entrar</button>
+                    <button class="btn btn-outline btn-sm" onclick="changeStatus('${project.id}', 'FINISHED')" title="Finalizar"><i class="fas fa-check"></i></button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--danger-color); border-color:var(--danger-color)" onclick="changeStatus('${project.id}', 'INACTIVE')" title="Desativar"><i class="fas fa-ban"></i></button>
+                `;
+            } else if (isFinished) {
+                 actionButtons = `<button class="btn btn-outline btn-sm" onclick="changeStatus('${project.id}', 'ACTIVE')">Reativar</button>`;
+            } else {
+                 actionButtons = `<button class="btn btn-outline btn-sm" onclick="changeStatus('${project.id}', 'ACTIVE')">Ativar</button>`;
+            }
+
+            const icon = project.type === 'viagem' ? 'fa-plane' : 'fa-truck'; // Simplificação, ideal vir da config
+
+            return `
+                <div class="project-card status-${project.status}">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3><i class="fas ${icon}"></i> ${project.title}</h3>
+                        <span style="font-size:0.8rem; padding: 2px 8px; border-radius:4px; background: rgba(255,255,255,0.1)">${project.type.toUpperCase()}</span>
+                    </div>
+                    <div class="project-meta">
+                        <span><i class="far fa-calendar-alt"></i> ${dateFormatted}</span>
+                        <span>${project.status}</span>
+                    </div>
+                    <div class="project-actions">
+                        ${actionButtons}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadProjects() {
+            // Paralelizar requisições
+            const [active, finished, inactive] = await Promise.all([
+                apiRequest('/projects?status=ACTIVE'),
+                apiRequest('/projects?status=FINISHED'),
+                apiRequest('/projects?status=INACTIVE')
+            ]);
+
+            const renderList = (data, elementId) => {
+                const el = document.getElementById(elementId);
+                el.innerHTML = '';
+                if (data && Array.isArray(data)) {
+                    data.forEach(p => el.innerHTML += createProjectCard(p));
+                }
+                if (!data || data.length === 0) el.innerHTML = '<p style="opacity:0.5; font-style:italic;">Nenhum item.</p>';
+            };
+
+            renderList(active, 'list-active');
+            renderList(finished, 'list-finished');
+            renderList(inactive, 'list-inactive');
+        }
+
+        async function changeStatus(id, newStatus) {
+            const res = await apiRequest(`/projects/${id}/status`, 'PATCH', { status: newStatus });
+            if (res) loadDashboard();
+        }
+
+        async function loadDashboard() {
+            await loadConfigCards();
+            await loadProjects();
+        }
+
+        // --- FORM HANDLERS: Create Project ---
+        document.getElementById('form-create-project').onsubmit = async (e) => {
+            e.preventDefault();
+            const budget = parseFloat(document.getElementById('create-budget').value);
+            
+            if (budget <= 0) {
+                alert("O valor estimado (Budget) não pode ser zero.");
+                return;
+            }
+
+            const payload = {
+                type: document.getElementById('create-type').value,
+                title: document.getElementById('create-title').value,
+                date: document.getElementById('create-date').value,
+                budget: budget,
+                status: "ACTIVE"
+            };
+
+            const res = await apiRequest('/projects', 'POST', payload);
+            if (res) {
+                closeModal('modal-create');
+                loadDashboard();
+            }
+        };
+
+        // --- DETAIL VIEW LOGIC ---
+
+        async function loadProjectDetail(id) {
+            // GET api/projects/{id} - Nota: o prompt pede essa URL especifica, mas vamos usar a lógica do BASE_API
+            const project = await apiRequest(`/projects/${id}`);
+            if (!project) return;
+
+            currentProjectCategories = project.selectedCategories || [];
+
+            // Buscar Items
+            const items = await apiRequest(`/projects/${id}/items`);
+            const itemList = items || [];
+
+            // Calcular Totais
+            const totalBudget = project.budget;
+            let totalSpent = 0;
+            let completedCount = 0;
+
+            itemList.forEach(item => {
+                totalSpent += item.value;
+                if (item.completed) completedCount++;
+            });
+
+            const remaining = totalBudget - totalSpent;
+            const progressPercent = itemList.length > 0 ? (completedCount / itemList.length) * 100 : 0;
+            const isOverBudget = remaining < 0;
+
+            // Render Header & Stats
+            const content = document.getElementById('project-detail-content');
+            
+            let alertHtml = '';
+            if (isOverBudget) {
+                alertHtml = `
+                    <div class="alert-box">
+                        <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        <div>
+                            <strong>Alerta de Orçamento!</strong><br>
+                            Você ultrapassou o valor planejado em R$ ${Math.abs(remaining).toFixed(2)}.
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Render Form Options based on Categories
+            let categoryOptions = currentProjectCategories.map(c => `<option value="${c.value}">${c.value}</option>`).join('');
+
+            content.innerHTML = `
+                <div class="detail-header">
+                    <div class="flex justify-between items-center">
+                        <h1>${project.title}</h1>
+                        <span style="font-size:1.2rem; opacity: 0.7;">${new Date(project.date).toLocaleDateString('pt-BR')}</span>
+                    </div>
+                    
+                    <div class="financial-summary">
+                        <div class="stat-box">
+                            <h3>Planejado</h3>
+                            <p style="font-size:1.5rem; font-weight:bold; color:var(--info-color);">R$ ${totalBudget.toFixed(2)}</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Gasto / Valor</h3>
+                            <p style="font-size:1.5rem; font-weight:bold; color:var(--text-color);">R$ ${totalSpent.toFixed(2)}</p>
+                        </div>
+                        <div class="stat-box">
+                            <h3>Restante</h3>
+                            <p style="font-size:1.5rem; font-weight:bold; color:${remaining < 0 ? 'var(--danger-color)' : 'var(--success-color)'};">R$ ${remaining.toFixed(2)}</p>
+                        </div>
+                    </div>
+
+                    ${alertHtml}
+
+                    <div style="margin-top:20px;">
+                        <div class="flex justify-between">
+                            <span>Progresso (${completedCount}/${itemList.length} itens)</span>
+                            <span>${Math.round(progressPercent)}%</span>
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Item Form -->
+                <div style="background: var(--card-bg); padding: 20px; border-radius: var(--border-radius); box-shadow: var(--box-shadow);">
+                    <h3 style="margin-bottom:15px;">Adicionar Novo Item</h3>
+                    <form id="form-add-item" class="flex gap-2" style="flex-wrap: wrap;">
+                        <input type="text" id="item-name" placeholder="Descrição (ex: Geladeira)" class="form-control" style="flex: 2; min-width: 200px;" required>
+                        <input type="number" id="item-value" placeholder="Valor (R$)" class="form-control" style="flex: 1; min-width: 100px;" step="0.01" value="0">
+                        <select id="item-category" class="form-control" style="flex: 1; min-width: 150px;" required>
+                            ${categoryOptions}
+                        </select>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Adicionar</button>
+                    </form>
+                </div>
+
+                <!-- Items List -->
+                <div id="items-container" class="items-section"></div>
+            `;
+
+            // Group Items by Category
+            const itemsContainer = document.getElementById('items-container');
+            const grouped = {};
+            
+            // Inicializa grupos com as categorias do projeto para garantir a ordem/existência
+            currentProjectCategories.forEach(cat => grouped[cat.value] = []);
+            
+            // Popula
+            itemList.forEach(item => {
+                if (!grouped[item.category]) grouped[item.category] = [];
+                grouped[item.category].push(item);
+            });
+
+            // Render Groups
+            for (const [category, items] of Object.entries(grouped)) {
+                if (items.length === 0) continue;
+
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'category-group';
+                
+                let itemsHtml = items.map(item => `
+                    <div class="item-row ${item.completed ? 'completed' : ''}">
+                        <div class="flex items-center">
+                            <input type="checkbox" class="item-check" 
+                                ${item.completed ? 'checked' : ''} 
+                                onchange="toggleItemComplete('${item.id}', this.checked)">
+                            <div>
+                                <strong>${item.name}</strong>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <span style="font-weight:bold;">R$ ${item.value.toFixed(2)}</span>
+                            <button class="btn btn-outline btn-sm" onclick="openEditPriceModal('${item.id}', ${item.value})"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-outline btn-sm" style="color:var(--danger-color); border-color:var(--danger-color)" onclick="deleteItem('${item.id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </div>
+                `).join('');
+
+                groupDiv.innerHTML = `<div class="category-title">${category}</div>${itemsHtml}`;
+                itemsContainer.appendChild(groupDiv);
+            }
+
+            // Attach Form Submit Handler dynamically
+            document.getElementById('form-add-item').onsubmit = async (e) => {
+                e.preventDefault();
+                const payload = {
+                    name: document.getElementById('item-name').value,
+                    value: parseFloat(document.getElementById('item-value').value) || 0,
+                    category: document.getElementById('item-category').value
+                };
+                
+                const res = await apiRequest(`/projects/${id}/items`, 'POST', payload);
+                if (res) loadProjectDetail(id);
+            };
+        }
+
+        // --- ITEM ACTIONS ---
+
+        async function toggleItemComplete(itemId, isChecked) {
+            await apiRequest(`/projects/${currentProjectId}/items/${itemId}/completed`, 'PATCH', { completed: isChecked });
+            // Recarrega para atualizar barra de progresso
+            loadProjectDetail(currentProjectId);
+        }
+
+        async function deleteItem(itemId) {
+            if(confirm("Tem certeza que deseja excluir este item?")) {
+                // Assumindo endpoint DELETE padrão REST, já que o prompt pediu "Excluir" mas não deu API específica
+                // Se a API não suportar DELETE, isso falhará, mas é o comportamento esperado de UI
+                await apiRequest(`/projects/${currentProjectId}/items/${itemId}`, 'DELETE');
+                loadProjectDetail(currentProjectId);
+            }
+        }
+
+        // --- FORM HANDLER: Edit Price ---
+        document.getElementById('form-edit-price').onsubmit = async (e) => {
+            e.preventDefault();
+            const itemId = document.getElementById('edit-item-id').value;
+            const newValue = parseFloat(document.getElementById('edit-value').value);
+
+            // API PATCH projects/{projectId}/items/{itemId}/price
+            // Nota: O prompt deu um exemplo com ID hardcoded no path, assumindo path dinâmico
+            await apiRequest(`/projects/${currentProjectId}/items/${itemId}/price`, 'PATCH', { value: newValue });
+            
+            closeModal('modal-edit-price');
+            loadProjectDetail(currentProjectId);
+        };
+
+
+        // --- INIT ---
+        window.onload = () => {
+            checkAuth();
+            loadDashboard();
+        };
+
+    </script>
+</body>
+</html>

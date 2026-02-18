@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Mudança - Entrar ou Cadastrar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@700;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; }
+        .font-brand { font-family: 'Montserrat', sans-serif; }
+
+        .hero-pattern {
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .auth-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .input-field {
+            background-color: #f1f5f9;
+            border: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .input-field:focus {
+            background-color: #ffffff;
+            border-color: #3b82f6;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="hero-pattern min-h-screen flex flex-col">
+
+    <!-- Navegação Simplificada -->
+    <nav class="max-w-7xl mx-auto px-6 py-6 w-full flex justify-between items-center">
+        <a href="index.html" class="flex items-center gap-2 group">
+            <span class="text-2xl transition-transform group-hover:-translate-x-1">⬅️</span>
+            <span class="font-brand font-bold text-slate-800 tracking-tight">Voltar</span>
+        </a>
+        <div class="flex items-center gap-2">
+            <span class="text-2xl">📦</span>
+            <span class="font-brand font-bold text-xl tracking-tight text-slate-800">Organizador</span>
+        </div>
+    </nav>
+
+    <!-- Container Central -->
+    <main class="flex-grow flex items-center justify-center p-6">
+        <div class="auth-card w-full max-w-md p-10 rounded-[2.5rem] space-y-6 fade-in">
+            
+            <div class="text-center">
+                <h1 id="auth-title" class="text-3xl font-extrabold font-brand text-slate-900 mb-2 text-balance">Bem-vindo de volta</h1>
+                <p id="auth-subtitle" class="text-slate-500">Introduza os seus dados para aceder à sua mudança.</p>
+            </div>
+
+            <!-- Alerta de Mensagem -->
+            <div id="auth-message" class="hidden p-4 rounded-xl text-sm font-medium text-center"></div>
+
+            <form id="auth-form" onsubmit="handleSubmit(event)" class="space-y-4">
+                
+                <!-- Campos Exclusivos de Cadastro (Ocultos por padrão) -->
+                <div id="register-fields" class="hidden space-y-4">
+                    <div class="flex gap-4">
+                        <div class="w-1/2 space-y-2">
+                            <label class="text-sm font-bold text-slate-700 ml-1">Nome</label>
+                            <input type="text" id="nome"
+                                class="input-field w-full p-4 rounded-2xl text-slate-900 placeholder:text-slate-400" 
+                                placeholder="João">
+                        </div>
+                        <div class="w-1/2 space-y-2">
+                            <label class="text-sm font-bold text-slate-700 ml-1">Sobrenome</label>
+                            <input type="text" id="sobrenome"
+                                class="input-field w-full p-4 rounded-2xl text-slate-900 placeholder:text-slate-400" 
+                                placeholder="Silva">
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-bold text-slate-700 ml-1">E-mail</label>
+                        <input type="email" id="email"
+                            class="input-field w-full p-4 rounded-2xl text-slate-900 placeholder:text-slate-400" 
+                            placeholder="exemplo@email.com">
+                    </div>
+                </div>
+                <!-- Fim Campos Cadastro -->
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-700 ml-1">Usuário</label>
+                    <input type="text" id="username" required 
+                        class="input-field w-full p-4 rounded-2xl text-slate-900 placeholder:text-slate-400" 
+                        placeholder="Ex: daniel_correa">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-slate-700 ml-1">Senha</label>
+                    <div class="relative">
+                        <input type="password" id="password" required 
+                            class="input-field w-full p-4 pr-12 rounded-2xl text-slate-900 placeholder:text-slate-400" 
+                            placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('password', this)" 
+                            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1">
+                            <!-- Ícone Olho Fechado (Padrão) -->
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 icon-hide">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                            </svg>
+                            <!-- Ícone Olho Aberto (Oculto) -->
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 icon-show hidden">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Campo Confirmar Senha (Oculto no login) -->
+                <div id="confirm-password-container" class="hidden space-y-2">
+                    <label class="text-sm font-bold text-slate-700 ml-1">Confirmar Senha</label>
+                    <div class="relative">
+                        <input type="password" id="confirmPassword"
+                            class="input-field w-full p-4 pr-12 rounded-2xl text-slate-900 placeholder:text-slate-400" 
+                            placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)" 
+                            class="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1">
+                            <!-- Ícone Olho Fechado -->
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 icon-hide">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                            </svg>
+                            <!-- Ícone Olho Aberto -->
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 icon-show hidden">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" id="submit-btn" 
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all transform active:scale-[0.98] shadow-lg shadow-blue-500/25 mt-4">
+                    Entrar
+                </button>
+            </form>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-slate-100"></div>
+                <span class="flex-shrink mx-4 text-slate-300 text-xs font-bold uppercase tracking-widest">ou</span>
+                <div class="flex-grow border-t border-slate-100"></div>
+            </div>
+
+            <div class="text-center">
+                <p id="toggle-text" class="text-slate-500 text-sm">Ainda não tem uma conta?</p>
+                <button onclick="toggleMode()" id="toggle-btn" class="text-blue-600 font-bold hover:underline mt-1 focus:outline-none">
+                    Criar conta gratuitamente
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-8 text-center text-slate-400 text-xs">
+        © 2024 Organizador de Mudança — Sua vida pessoal em ordem.
+    </footer>
+
+    <script>
+        let isLoginMode = true;
+       
+        const API_BASE = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === ""
+            ? "http://localhost:8082/api/auth"
+            : "https://mudanca-ap.onrender.com/api/auth";
+
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            const iconShow = btn.querySelector('.icon-show');
+            const iconHide = btn.querySelector('.icon-hide');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconShow.classList.remove('hidden');
+                iconHide.classList.add('hidden');
+            } else {
+                input.type = 'password';
+                iconShow.classList.add('hidden');
+                iconHide.classList.remove('hidden');
+            }
+        }
+
+        function toggleMode() {
+            isLoginMode = !isLoginMode;
+            
+            const title = document.getElementById('auth-title');
+            const subtitle = document.getElementById('auth-subtitle');
+            const submitBtn = document.getElementById('submit-btn');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleBtn = document.getElementById('toggle-btn');
+            const messageBox = document.getElementById('auth-message');
+            const authCard = document.querySelector('.auth-card');
+            
+            // Campos de cadastro extras
+            const registerFields = document.getElementById('register-fields');
+            const nomeInput = document.getElementById('nome');
+            const sobrenomeInput = document.getElementById('sobrenome');
+            const emailInput = document.getElementById('email');
+
+            // Campo Confirmar Senha
+            const confirmPasswordContainer = document.getElementById('confirm-password-container');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+
+            messageBox.classList.add('hidden');
+            authCard.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (isLoginMode) {
+                    // MODO LOGIN
+                    title.innerText = "Bem-vindo de volta";
+                    subtitle.innerText = "Introduza os seus dados para aceder à sua mudança.";
+                    submitBtn.innerText = "Entrar";
+                    toggleText.innerText = "Ainda não tem uma conta?";
+                    toggleBtn.innerText = "Criar conta gratuitamente";
+                    
+                    // Esconder campos de cadastro e remover obrigatoriedade
+                    registerFields.classList.add('hidden');
+                    nomeInput.required = false;
+                    sobrenomeInput.required = false;
+                    emailInput.required = false;
+
+                    // Esconder confirmação de senha
+                    confirmPasswordContainer.classList.add('hidden');
+                    confirmPasswordInput.required = false;
+                    confirmPasswordInput.value = ''; // Limpa o campo ao voltar para login
+
+                } else {
+                    // MODO CADASTRO
+                    title.innerText = "Crie sua conta";
+                    subtitle.innerText = "Preencha os campos abaixo para começar a organizar.";
+                    submitBtn.innerText = "Cadastrar";
+                    toggleText.innerText = "Já possui uma conta?";
+                    toggleBtn.innerText = "Fazer login agora";
+
+                    // Mostrar campos de cadastro e tornar obrigatórios
+                    registerFields.classList.remove('hidden');
+                    nomeInput.required = true;
+                    sobrenomeInput.required = true;
+                    emailInput.required = true;
+
+                    // Mostrar confirmação de senha
+                    confirmPasswordContainer.classList.remove('hidden');
+                    confirmPasswordInput.required = true;
+                }
+                authCard.style.opacity = '1';
+            }, 150);
+        }
+
+        async function handleSubmit(event) {
+            console.log("Host atual:", window.location.hostname);
+            event.preventDefault();
+
+            // Elementos Básicos
+            const usernameInput = document.getElementById('username').value;
+            const passwordInput = document.getElementById('password').value;
+            const submitBtn = document.getElementById('submit-btn');
+            
+            // Validação de senha no cadastro
+            if (!isLoginMode) {
+                const confirmPassword = document.getElementById('confirmPassword').value;
+                if (passwordInput !== confirmPassword) {
+                    showMessage("As senhas não coincidem.", "error");
+                    return;
+                }
+            }
+
+            const endpoint = isLoginMode ? '/login' : '/register';
+            const url = `${API_BASE}${endpoint}`;
+            
+            // Payload base
+            let payload = {
+                "username": usernameInput,
+                "password": passwordInput
+            };
+
+            // Se for cadastro, adiciona os campos extras
+            if (!isLoginMode) {
+                payload.nome = document.getElementById('nome').value;
+                payload.sobrenome = document.getElementById('sobrenome').value;
+                payload.email = document.getElementById('email').value;
+            }
+
+            // Estado de carregamento
+            submitBtn.disabled = true;
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = "Processando...";
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'accept': '*/*',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    // Tenta ler como texto primeiro
+                    const responseText = await response.text();
+                    let data = {};
+                    
+                    try {
+                        data = responseText ? JSON.parse(responseText) : {};
+                    } catch (e) {
+                        console.warn("A resposta não é um JSON válido:", responseText);
+                        data = { token: responseText }; 
+                    }
+                    
+                    if (isLoginMode) {
+                        // LOGIN SUCESSO
+                        const token = data.token || (typeof data === 'string' ? data : 'logged_in');
+                        
+                        localStorage.setItem('auth_token', token); 
+                        localStorage.setItem('user_session', JSON.stringify({
+                            username: usernameInput,
+                            token: token,
+                            loginTime: new Date().getTime()
+                        }));
+                        
+                        showMessage("Login realizado! Redirecionando...", "success");
+                        
+                        setTimeout(() => {
+                            window.location.href = 'organizador.html';
+                        }, 800);
+
+                    } else {
+                        // CADASTRO SUCESSO
+                        showMessage("Cadastro realizado com sucesso! Faça login.", "success");
+                        // Limpa os campos de cadastro
+                        document.getElementById('nome').value = '';
+                        document.getElementById('sobrenome').value = '';
+                        document.getElementById('email').value = '';
+                        document.getElementById('username').value = ''; 
+                        document.getElementById('password').value = '';
+                        document.getElementById('confirmPassword').value = '';
+                        
+                        toggleMode(); // Volta para tela de login
+                    }
+
+                } else {
+                    // ERRO NA API
+                    const errorText = await response.text();
+                    console.error("Erro na API:", response.status, errorText);
+                    
+                    let errorMsg = "Ocorreu um erro.";
+                    
+                    if (isLoginMode) {
+                        errorMsg = "Usuário ou senha incorretos.";
+                    } else {
+                        if (response.status === 409) errorMsg = "Este usuário ou e-mail já existe.";
+                        else errorMsg = "Erro ao cadastrar. Verifique os dados.";
+                    }
+                    
+                    showMessage(errorMsg, "error");
+                }
+            } catch (error) {
+                console.error('Erro de conexão:', error);
+                showMessage("Erro de conexão com o servidor.", "error");
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageBox = document.getElementById('auth-message');
+            messageBox.innerText = text;
+            messageBox.classList.remove('hidden', 'bg-red-50', 'text-red-600', 'bg-green-50', 'text-green-600');
+            
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-50', 'text-red-600');
+            } else {
+                messageBox.classList.add('bg-green-50', 'text-green-600');
+            }
+        }
+
+        window.onload = () => {
+            if (localStorage.getItem('auth_token')) {
+                window.location.href = 'organizador.html';
+            }
+        };
+    </script>
+</body>
+</html>

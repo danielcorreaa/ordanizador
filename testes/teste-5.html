@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gerenciamento Pessoal</title>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --border: #e2e8f0;
+            --header-bg: #ffffff;
+            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        /* Temas */
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --header-bg: #1e293b;
+            --border: #334155;
+        }
+
+        [data-theme="solarized"] {
+            --bg-color: #fdf6e3;
+            --card-bg: #eee8d5;
+            --text-main: #073642;
+            --text-muted: #586e75;
+            --accent: #268bd2;
+            --border: #d5c4a1;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-color: #000b1e;
+            --card-bg: #111122;
+            --text-main: #00ff9f;
+            --text-muted: #ff003c;
+            --accent: #fdf001;
+            --border: #00ff9f;
+        }
+
+        [data-theme="matrix"] {
+            --bg-color: #0d0208;
+            --card-bg: #000000;
+            --text-main: #00ff41;
+            --text-muted: #008f11;
+            --accent: #00ff41;
+            --border: #003b00;
+        }
+
+        [data-theme="dracula"] {
+            --bg-color: #282a36;
+            --card-bg: #44475a;
+            --text-main: #f8f8f2;
+            --text-muted: #6272a4;
+            --accent: #bd93f9;
+            --border: #44475a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; transition: background 0.3s, color 0.3s; }
+
+        body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+
+        /* Header */
+        header {
+            background: var(--header-bg);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow);
+            border-bottom: 1px solid var(--border);
+            position: sticky; top: 0; z-index: 100;
+        }
+
+        .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 800; font-size: 1.2rem; color: var(--accent); }
+        .nav-right { display: flex; align-items: center; gap: 1.5rem; }
+        
+        .theme-selector { display: flex; gap: 0.5rem; }
+        .theme-btn { 
+            background: none; border: 1px solid var(--border); color: var(--text-main);
+            padding: 0.4rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center;
+        }
+        .theme-btn:hover { background: var(--border); }
+
+        .logout-btn { background: var(--danger); color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 600; }
+
+        /* Main Content */
+        main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+        section { margin-bottom: 3rem; }
+        h2 { margin-bottom: 1.5rem; font-size: 1.5rem; border-left: 4px solid var(--accent); padding-left: 1rem; }
+
+        /* Grid layouts */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .card:hover { transform: translateY(-3px); border-color: var(--accent); }
+        
+        .card-icon { font-size: 2rem; color: var(--accent); margin-bottom: 0.5rem; }
+        .card-label { font-weight: 700; font-size: 1.1rem; }
+        .card-subtitle { color: var(--text-muted); font-size: 0.9rem; }
+
+        .project-card { cursor: default; }
+        .project-footer { margin-top: auto; display: flex; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        
+        .btn { padding: 0.5rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 0.3rem; font-size: 0.85rem; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-danger-outline { background: transparent; border: 1px solid var(--danger); color: var(--danger); }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); 
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+            backdrop-filter: blur(4px);
+        }
+        .modal {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%; max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.2);
+            border: 1px solid var(--border);
+        }
+        .form-group { margin-bottom: 1.2rem; display: flex; flex-direction: column; gap: 0.4rem; }
+        .form-group label { font-size: 0.9rem; font-weight: 600; color: var(--text-muted); }
+        input, select { 
+            padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border); 
+            background: var(--bg-color); color: var(--text-main);
+        }
+        input:focus { outline: 2px solid var(--accent); }
+
+        /* Loader */
+        .loader-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.3);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+        }
+        .spinner {
+            width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Detalhes do Projeto */
+        .view-details { display: none; }
+        .details-header { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid var(--border); }
+        .budget-stats { display: flex; gap: 2rem; margin-top: 1rem; }
+        .stat-item { flex: 1; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .stat-value { font-size: 1.5rem; font-weight: 800; }
+        .budget-over { color: var(--danger); }
+        .alert-danger { background: #fee2e2; color: #b91c1c; padding: 0.75rem; border-radius: 6px; margin-top: 1rem; font-size: 0.9rem; font-weight: 600; border: 1px solid #fecaca; }
+
+        .items-section { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        @media (max-width: 768px) { .items-section { grid-template-columns: 1fr; } }
+        
+        .item-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0.75rem; border-bottom: 1px solid var(--border);
+        }
+        .item-info { display: flex; flex-direction: column; }
+        .item-price { font-weight: 700; color: var(--accent); }
+
+        /* Footer */
+        footer {
+            padding: 2rem; text-align: center; border-top: 1px solid var(--border);
+            background: var(--header-bg); color: var(--text-muted); font-size: 0.9rem;
+        }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div id="loader" class="loader-overlay"><div class="spinner"></div></div>
+
+    <header>
+        <div class="logo">
+            <i data-lucide="layout-dashboard"></i>
+            <span>DGP SYSTEM</span>
+        </div>
+        <div class="nav-right">
+            <div class="theme-selector">
+                <button class="theme-btn" onclick="setTheme('light')" title="Light"><i data-lucide="sun"></i></button>
+                <button class="theme-btn" onclick="setTheme('dark')" title="Dark"><i data-lucide="moon"></i></button>
+                <button class="theme-btn" onclick="setTheme('solarized')" title="Solarized"><i data-lucide="palette"></i></button>
+                <button class="theme-btn" onclick="setTheme('cyberpunk')" title="Cyberpunk"><i data-lucide="zap"></i></button>
+                <button class="theme-btn" onclick="setTheme('matrix')" title="Matrix"><i data-lucide="terminal"></i></button>
+                <button class="theme-btn" onclick="setTheme('dracula')" title="Dracula"><i data-lucide="ghost"></i></button>
+            </div>
+            <button class="logout-btn" onclick="logout()">
+                <i data-lucide="log-out"></i> Sair
+            </button>
+        </div>
+    </header>
+
+    <main>
+        <!-- Dashboard View -->
+        <div id="view-dashboard">
+            <section>
+                <h2>Projetos Ativos</h2>
+                <div id="active-projects" class="grid">
+                    <!-- Dinâmico -->
+                </div>
+            </section>
+
+            <section>
+                <h2>Configurações</h2>
+                <div id="config-cards" class="grid">
+                    <!-- Dinâmico da API /config/all -->
+                </div>
+            </section>
+
+            <section>
+                <h2>Projetos Inativos</h2>
+                <div id="inactive-projects" class="grid">
+                    <!-- Dinâmico -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Details View -->
+        <div id="view-details" class="view-details">
+            <button class="btn btn-outline" onclick="showDashboard()" style="margin-bottom: 1rem;">
+                <i data-lucide="arrow-left"></i> Voltar
+            </button>
+            
+            <div id="details-content">
+                <!-- Dinâmico via JS -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Mudança -->
+    <div id="modal-mudanca" class="modal-overlay">
+        <div class="modal">
+            <h3 style="margin-bottom: 1.5rem;">Nova Mudança</h3>
+            <form id="form-mudanca">
+                <div class="form-group">
+                    <label>TÍTULO / DESCRIÇÃO</label>
+                    <input type="text" id="m-title" required style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label>DATA DA MUDANÇA</label>
+                    <input type="date" id="m-date" required>
+                </div>
+                <div class="form-group">
+                    <label>ORÇAMENTO PREVISTO (R$)</label>
+                    <input type="number" step="0.01" id="m-budget" required>
+                </div>
+                <div class="form-group">
+                    <label>IMÓVEL ATUAL</label>
+                    <select id="m-old">
+                        <option value="Apartamento">Apartamento</option>
+                        <option value="Casa">Casa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>IMÓVEL NOVO</label>
+                    <select id="m-new">
+                        <option value="Apartamento">Apartamento</option>
+                        <option value="Casa">Casa</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-outline" style="flex:1" onclick="closeModals()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Viagem -->
+    <div id="modal-viagem" class="modal-overlay">
+        <div class="modal">
+            <h3 style="margin-bottom: 1.5rem;">Nova Viagem</h3>
+            <form id="form-viagem">
+                <div class="form-group">
+                    <label>DESTINO</label>
+                    <input type="text" id="v-title" required style="text-transform: uppercase;">
+                </div>
+                <div class="form-group">
+                    <label>DATA DA VIAGEM</label>
+                    <input type="date" id="v-date" required>
+                </div>
+                <div class="form-group">
+                    <label>ORÇAMENTO (R$)</label>
+                    <input type="number" step="0.01" id="v-budget" required>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn btn-outline" style="flex:1" onclick="closeModals()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary" style="flex:1">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        Desenvolvido por <strong>Daniel Aleixo Correa</strong> em 2026, Lins - SP<br>
+        <small>Sistema inteligente para gerenciamento de finanças e projetos pessoais</small>
+    </footer>
+
+    <script>
+        // Configurações Globais
+        const API_BASE = "http://localhost:8080/api";
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        let currentProject = null;
+
+        // UI Helpers
+        const toggleLoader = (show) => document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        
+        const formatCurrency = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        };
+
+        const logout = () => {
+            localStorage.removeItem('auth_token');
+            window.location.href = "index.html";
+        };
+
+        const handleError = (error) => {
+            if (error.status === 403) {
+                window.location.href = "index.html";
+            } else {
+                alert("Erro na operação: " + error.message);
+            }
+        };
+
+        // Fetch Functions
+        async function fetchConfigs() {
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${API_BASE}/project/config/all`, { headers: getHeaders() });
+                if (!response.ok) throw response;
+                const data = await response.json();
+                renderConfigs(data);
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        async function fetchProjects() {
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${API_BASE}/project/projects`, { headers: getHeaders() });
+                if (!response.ok) throw response;
+                const data = await response.json();
+                renderProjects(data);
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        async function updateProjectStatus(id, newStatus) {
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${API_BASE}/project/projects/${id}`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+                if (!response.ok) throw response;
+                fetchProjects();
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        // Render Functions
+        function renderConfigs(configs) {
+            const container = document.getElementById('config-cards');
+            container.innerHTML = '';
+            configs.filter(c => c.active).forEach(conf => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-icon"><i data-lucide="${conf.icon || 'settings'}"></i></div>
+                    <div class="card-label">${conf.label}</div>
+                    <div class="card-subtitle">${conf.subtitle || ''}</div>
+                `;
+                card.onclick = () => openModal(conf.id);
+                container.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function renderProjects(projects) {
+            const activeList = document.getElementById('active-projects');
+            const inactiveList = document.getElementById('inactive-projects');
+            activeList.innerHTML = '';
+            inactiveList.innerHTML = '';
+
+            projects.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'card project-card';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content: space-between; align-items: flex-start;">
+                        <span style="font-size: 0.7rem; background: var(--accent); color: white; padding: 2px 8px; border-radius: 20px; text-transform: uppercase;">${p.type}</span>
+                        <span style="font-size: 0.7rem; color: var(--text-muted);">${p.status}</span>
+                    </div>
+                    <div class="card-label">${p.title}</div>
+                    <div class="card-subtitle">${new Date(p.date).toLocaleDateString('pt-BR')}</div>
+                    <div class="project-footer">
+                        ${p.status === 'active' 
+                            ? `<button class="btn btn-primary" onclick="enterProject('${p.id}')">Entrar</button>
+                               <button class="btn btn-outline" title="Inativar" onclick="updateProjectStatus('${p.id}', 'inactive')"><i data-lucide="power"></i></button>`
+                            : `<button class="btn btn-outline" onclick="updateProjectStatus('${p.id}', 'active')"><i data-lucide="play"></i> Reativar</button>`
+                        }
+                    </div>
+                `;
+                if (p.status === 'active') activeList.appendChild(card);
+                else inactiveList.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // Project Detail Flow
+        async function enterProject(id) {
+            // No cenário real, buscaríamos os itens do projeto aqui
+            toggleLoader(true);
+            try {
+                // Mock do projeto selecionado (ou novo fetch)
+                const res = await fetch(`${API_BASE}/project/projects`, { headers: getHeaders() });
+                const projects = await res.json();
+                currentProject = projects.find(p => p.id == id);
+                
+                // Buscar itens
+                const itemsRes = await fetch(`${API_BASE}/itens`, { headers: getHeaders() });
+                const allItems = await itemsRes.json();
+                const projectItems = allItems.filter(i => i.idProjeto == id);
+                
+                renderDetailsView(currentProject, projectItems);
+                
+                document.getElementById('view-dashboard').style.display = 'none';
+                document.getElementById('view-details').style.display = 'block';
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        function renderDetailsView(proj, items) {
+            const totalSpent = items.reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const budget = proj.extras?.budget || 0;
+            const balance = budget - totalSpent;
+            const isOver = balance < 0;
+
+            const container = document.getElementById('details-content');
+            container.innerHTML = `
+                <div class="details-header">
+                    <h1>${proj.title}</h1>
+                    <div class="budget-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Planejado</div>
+                            <div class="stat-value">${formatCurrency(budget)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Gasto</div>
+                            <div class="stat-value">${formatCurrency(totalSpent)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Saldo</div>
+                            <div class="stat-value ${isOver ? 'budget-over' : ''}">${formatCurrency(balance)}</div>
+                        </div>
+                    </div>
+                    ${isOver ? `<div class="alert-danger"><i data-lucide="alert-triangle"></i> ORÇAMENTO ESTOURADO!</div>` : ''}
+                </div>
+
+                <div class="card" style="margin-bottom: 2rem; cursor: default;">
+                    <h3>Adicionar Item</h3>
+                    <form id="form-item" style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 1rem; margin-top: 1rem; align-items: end;">
+                        <div class="form-group" style="margin:0">
+                            <label>DESCRIÇÃO</label>
+                            <input type="text" id="i-name" required placeholder="Ex: Geladeira">
+                        </div>
+                        <div class="form-group" style="margin:0">
+                            <label>VALOR (R$)</label>
+                            <input type="number" step="0.01" id="i-value" required>
+                        </div>
+                        <div class="form-group" style="margin:0">
+                            <label>CATEGORIA</label>
+                            <select id="i-cat">
+                                <option value="antigo">Antigo (${proj.extras?.oldHome || 'Imóvel'})</option>
+                                <option value="novo">Novo (${proj.extras?.newHome || 'Imóvel'})</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="height: 45px;">Adicionar</button>
+                    </form>
+                </div>
+
+                <div class="items-section">
+                    <div>
+                        <h3>Itens do Imóvel Antigo</h3>
+                        <div id="items-antigo"></div>
+                    </div>
+                    <div>
+                        <h3>Itens do Imóvel Novo</h3>
+                        <div id="items-novo"></div>
+                    </div>
+                </div>
+            `;
+
+            renderItemList(items);
+            
+            // Re-bind form
+            document.getElementById('form-item').onsubmit = (e) => {
+                e.preventDefault();
+                saveItem();
+            };
+            lucide.createIcons();
+        }
+
+        function renderItemList(items) {
+            const antigoList = document.getElementById('items-antigo');
+            const novoList = document.getElementById('items-novo');
+            antigoList.innerHTML = '';
+            novoList.innerHTML = '';
+
+            items.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'item-row';
+                row.innerHTML = `
+                    <div class="item-info">
+                        <strong>${item.name}</strong>
+                    </div>
+                    <div style="display:flex; align-items:center; gap: 1rem;">
+                        <span class="item-price">${formatCurrency(item.value)}</span>
+                        <button class="btn btn-danger-outline" onclick="deleteItem('${item._id}')" style="padding: 4px;"><i data-lucide="trash-2" size="16"></i></button>
+                    </div>
+                `;
+                if (item.category === 'antigo') antigoList.appendChild(row);
+                else novoList.appendChild(row);
+            });
+            lucide.createIcons();
+        }
+
+        async function saveItem() {
+            const name = document.getElementById('i-name').value;
+            const value = parseFloat(document.getElementById('i-value').value);
+            const category = document.getElementById('i-cat').value;
+
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${API_BASE}/itens`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify({
+                        name,
+                        value,
+                        category,
+                        idProjeto: currentProject.id
+                    })
+                });
+                if (!response.ok) throw response;
+                enterProject(currentProject.id); // Refresh
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm("Deseja excluir este item?")) return;
+            toggleLoader(true);
+            try {
+                await fetch(`${API_BASE}/itens/${id}`, { method: 'DELETE', headers: getHeaders() });
+                enterProject(currentProject.id);
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        // Modals Logic
+        function openModal(type) {
+            if (type === 'mudanca') document.getElementById('modal-mudanca').style.display = 'flex';
+            if (type === 'viagem') document.getElementById('modal-viagem').style.display = 'flex';
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal-overlay').forEach(m => m.style.display = 'none');
+        }
+
+        function showDashboard() {
+            document.getElementById('view-details').style.display = 'none';
+            document.getElementById('view-dashboard').style.display = 'block';
+            fetchProjects();
+        }
+
+        // Submit Forms Projetos
+        document.getElementById('form-mudanca').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                type: 'mudanca',
+                title: document.getElementById('m-title').value.toUpperCase(),
+                date: document.getElementById('m-date').value,
+                status: 'active',
+                extras: {
+                    budget: parseFloat(document.getElementById('m-budget').value),
+                    oldHome: document.getElementById('m-old').value,
+                    newHome: document.getElementById('m-new').value
+                }
+            };
+            saveProject(payload);
+        };
+
+        document.getElementById('form-viagem').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                type: 'viagem',
+                title: document.getElementById('v-title').value.toUpperCase(),
+                date: document.getElementById('v-date').value,
+                status: 'active',
+                extras: {
+                    budget: parseFloat(document.getElementById('v-budget').value)
+                }
+            };
+            saveProject(payload);
+        };
+
+        async function saveProject(payload) {
+            toggleLoader(true);
+            try {
+                const response = await fetch(`${API_BASE}/project/projects`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) throw response;
+                closeModals();
+                fetchProjects();
+            } catch (e) { handleError(e); }
+            finally { toggleLoader(false); }
+        }
+
+        // Init
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+            lucide.createIcons();
+            
+            // Carregar dados
+            fetchConfigs();
+            fetchProjects();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+[Definições]
+
+Cria uma uma single page com html,css e javascript,
+Deve ter um layout clean e moderno
+Deve ser responsivo, adotar a abordagem "Mobile-First" 
+Deve usar o Font Awesome com a versão mais estável
+
+
+Api deve ter o endereço http://localhost:8080/api 
+Aplique a regra a seguir para obter a URL das apis: BASE_API
+const BASE_API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === ""
+	? "http://localhost:8082/api"
+	: "https://personal-organization.onrender.com/api"
+	
+Em toda requisição deve ser enviado esse header que obtem o token do localstorage, código a seguir
+getHeaders na requisiçao const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+Deve usar um loader a cada requisiçao		
+Quando a Api dar erro,  Deve mostrar a resposta, que vai retornar no campo message da Api
+Quando a api retornar erro 403 ou 401, deve redirecionar para index.html
+
+[HEADER]
+Deve ter uma descrição, o sistema é sobre um organizador de atividades como mudar de casa, viajar etc
+Deve ter o usuário logado no sistema pega o token do localStorage - 'auth_token', mostre o nome e o email de quem tá logado, caso esteja vazio mostre usuário anomimo
+Deve ter icones de temas, que quando o usuário clicar muda as cores das telas
+Temas sugeridos - light, dark, solarized, cyberpunk, matrix, dracula,, Deve deixar o tema cyberpunk como default 
+Deve ter um botão logout que limpa o localStorage é redirecionado para a tela index.html
+
+	
+		
+[BODY]
+[Cards de configuração]
+As Configurações devem ser listadas na parte esquerda da tela, de forma vertical
+Buscar dados de configuração na API GEt BASE_API/project-types
+Adiciona as informações em um card
+
+Os card devem mostrar o label em destaque e o subtitle abaixo, 
+Deve mostrar o icone que retorna na api e deixe ele em destaque em cima do label
+Deve exibir o card se a configuração for active=true
+Cada card deve ser clicável
+
+[Modal]
+Quando eu clicar no card de mudanças
+
+Deve Abrir um modal com um formulario esse formulário deve ter titulo, Data e Valor Estimado
+
+	
+Requisição Deve ser feita para BASE_API/projects	
+POST
+{
+  "type": "mudanca", o type é pego do modal que foi clicado, se fosse em viagem o type seria viagem
+  "title": "casa nova", definido pelo usuário
+  "date": "2026-02-12", definido pelo usuário
+  "budget": 0, definido pelo usuário, back end não aceita valor 0, vai retornar um erro caso seja zero, capturar esse erro na resposta da API
+  "status": "ACTIVE", deve ser default 
+}
+
+
+[Lista De Projetos]
+OS projetos devem ser listadas na parte direita da tela de forma horizontal
+Devem ser separados por status, primeiro ACTIVE, depois FINISHED e depois INACTIVE
+ACTIVE deve usar a cor verde, FINISHED deve ficar na cor azul e INACTIVE na cor vermelha 
+
+Busque os projetos ativos usando essa API 
+GEt BASE_API/projects?status=ACTIVE
+
+No card deve ser mostrado o tipo do Projeto se é Mudança ou viagem(type), se está ativo ou não(status)
+O titulo do projeto (title) e a data(date), 
+Deve ser na parte inferior, um botão escrito Entrar 
+Deve terum botão que pode ser um icone para desativar, e um para finalizar
+
+Altera o status de um projeto usando essa API
+PATCH projects BASE_API/{projectID}/status
+
+{
+  "status": "INACTIVE" - pode ser ACTIVE - INACTIVE - FINISHED
+}
+
+Busque os projetos inativos usando essa API 
+GEt BASE_API/projects?status=INACTIVE
+Busque os projetos finalizados usando essa API 
+GEt BASE_API/projects?status=FINISHED
+
+[Tela de organizar um projeto]
+
+Na Lista De Projetos, ativas, quando o usuários clicar no botão Entrar, ele deve ser redicionado para uma nova tela
+
+Para obter os dados dessa nova tela
+
+GET para BASE_API/api/projects/projectId, id do projeto clicado
+use o json de resposta para montar a tela 
+
+{
+  "id": "93742f83-f14e-4e0c-9068-2d8d962f7147",
+  "userId": "anonymousUser",
+  "type": "mudanca",
+  "title": "casa nova",
+  "date": "2026-02-12",
+  "status": "ACTIVE",
+  "budget": 10,
+  "selectedCategories": [
+    {
+      "id": "origem_imovel",
+      "value": "Origem Imovel"
+    },
+    {
+      "id": "destino_imovel",
+      "value": "Destino Imovel"
+    }
+  ]
+  
+No topo da tela deve ser explido as informações do projeto e Total Planejado (Budget) 
+Saldo Restante, que deve ser o budget,o value cadastrado no item de mudanças,
+Deve adicionar um fundo vermelho uma mensagem de alerta que o orçamento foi estourado
+Deve ter um campo de progresso, de acordo com o que estiver pronto, quando completed estiver true, significa que o item foi finalizado
+(Em viagem a barra de proguesso deve ser para os custos, se o que foi gasto está maior que o valor planejado)
+
+
+Deve ter um formulário 
+Adicionar Novo Item
+	Descrição - Pode ser Geladeira, Maquina de Lavar, piso, Pedreiro, Vidraceiro, se for mudança mas se for viagem pode ser Passagem ida, Passsagem volta
+	Valor: quando custou, pode ser zero, e o valor depois pode ser adicionado
+	Categoria: deve ser um select e as opções estão no selectedCategories, pegar o campo value, no caso de viagem o selectedCategories vai ser outros
+
+Deve usar essa api API Post BASE_API/api/projects/items/{projectID}
+
+exemplo
+{
+  "name": "Geladeira",
+  "value": 0,
+  "category": "Destino Imovel"  
+}
+
+deve listar de acordo com a category
+por exemplo:
+Casa Nova ... Casa Antiga, ou Apartamento novo ... Apartamento Antigo, use o selectedCategories
+
+API para listar GET BASE_API/api/projects/items/{projectID}
+
+
+Deve ter uma opção de check que vai chamar essa api para completar o item e deve afetar a barra de progresso
+
+PATCH BASE_API/projects/items/{itemId}/completed
+
+{
+  "completed": true
+}
+
+O valor deve ser editavel e deve ter um excluir
+Quando clicar em ditar deve abrir um modal que tem um valor
+
+deve chamar essa api
+PATCH BASE_API/projects/items/5bb84a83-92d6-4e89-b390-fe540b676dcd/price
+
+{
+  "value": 10
+}
+
+footer
+Deve ter um rodapé: como a descrição, desenvolvido por Daniel Aleixo Correa em 2026, Lins Sp, Sistema para gerenciamento pessoal(pode melhorar esse texto)

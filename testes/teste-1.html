@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento Pessoal - Daniel Aleixo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Configurações de Temas */
+        :root[data-theme="light"] {
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --primary: #3b82f6;
+            --accent: #e2e8f0;
+        }
+        :root[data-theme="dark"] {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --primary: #60a5fa;
+            --accent: #334155;
+        }
+        :root[data-theme="solarized"] {
+            --bg: #fdf6e3;
+            --card-bg: #eee8d5;
+            --text: #586e75;
+            --primary: #268bd2;
+            --accent: #93a1a1;
+        }
+        :root[data-theme="cyberpunk"] {
+            --bg: #000000;
+            --card-bg: #2d005e;
+            --text: #00ff00;
+            --primary: #ff00ff;
+            --accent: #ffff00;
+        }
+        :root[data-theme="matrix"] {
+            --bg: #000000;
+            --card-bg: #0d0d0d;
+            --text: #00ff41;
+            --primary: #008f11;
+            --accent: #003b00;
+            --border: 1px solid #00ff41;
+        }
+        :root[data-theme="dracula"] {
+            --bg: #282a36;
+            --card-bg: #44475a;
+            --text: #f8f8f2;
+            --primary: #bd93f9;
+            --accent: #6272a4;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .custom-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            transition: transform 0.2s;
+        }
+
+        .custom-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .loader {
+            border: 4px solid var(--accent);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        header, footer {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--accent);
+        }
+
+        footer {
+            border-top: 1px solid var(--accent);
+            border-bottom: none;
+            margin-top: auto;
+        }
+
+        button {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .theme-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="p-4 shadow-sm">
+        <div class="container mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="text-2xl font-bold flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>CoreSystem</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <!-- Theme Selector -->
+                <select id="themeSelector" class="bg-transparent border border-current rounded p-1 text-sm outline-none">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="solarized">Solarized</option>
+                    <option value="cyberpunk">Cyberpunk</option>
+                    <option value="matrix">Matrix</option>
+                    <option value="dracula">Dracula</option>
+                </select>
+
+                <!-- Logout Button -->
+                <button onclick="handleLogout()" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></button>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-8 flex-grow">
+        <h1 class="text-3xl font-bold mb-8 text-center">Configurações do Projeto</h1>
+        
+        <!-- Loader -->
+        <div id="loaderContainer" class="flex flex-col items-center justify-center py-20 hidden">
+            <div class="loader"></div>
+            <p class="mt-4 animate-pulse">Buscando dados no servidor...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorContainer" class="hidden text-center py-10">
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative inline-block mx-auto">
+                <strong class="font-bold">Ops!</strong>
+                <span class="block sm:inline"> Não foi possível carregar os dados. Verifique sua conexão ou se a API está online em localhost:8080.</span>
+            </div>
+        </div>
+
+        <!-- Cards Container -->
+        <div id="cardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Dynamic Content Here -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-6 text-center">
+        <div class="container mx-auto">
+            <p class="font-medium">Sistema de Gerenciamento Pessoal &copy; 2026</p>
+            <p class="text-sm opacity-75 mt-1">Eficiência e organização para sua rotina diária.</p>
+            <div class="mt-4 pt-4 border-t border-current opacity-20"></div>
+            <p class="text-xs uppercase tracking-widest mt-2">
+                Desenvolvido por <span class="font-bold">Daniel Aleixo Correa</span> | Lins, SP
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Configurações e Utilitários
+        const API_URL = 'http://localhost:8080/api/project/config/all';
+        
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        // Gerenciamento de Tema
+        const themeSelector = document.getElementById('themeSelector');
+        themeSelector.addEventListener('change', (e) => {
+            document.documentElement.setAttribute('data-theme', e.target.value);
+            localStorage.setItem('selected_theme', e.target.value);
+        });
+
+        // Carregar tema salvo
+        const savedTheme = localStorage.getItem('selected_theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        themeSelector.value = savedTheme;
+
+        // Logout
+        function handleLogout() {
+            localStorage.removeItem('auth_token');
+            // Mostra feedback visual
+            const main = document.querySelector('main');
+            main.innerHTML = `
+                <div class="text-center py-20">
+                    <h2 class="text-2xl font-bold mb-4">Sessão Encerrada</h2>
+                    <p>O token de acesso foi removido com sucesso.</p>
+                    <button onclick="location.reload()" class="mt-6 px-4 py-2 bg-blue-500 text-white rounded">Reiniciar</button>
+                </div>
+            `;
+        }
+
+        // Busca de Dados
+        async function fetchData() {
+            const loader = document.getElementById('loaderContainer');
+            const grid = document.getElementById('cardsGrid');
+            const errorContainer = document.getElementById('errorContainer');
+
+            loader.classList.remove('hidden');
+            grid.innerHTML = '';
+            errorContainer.classList.add('hidden');
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) throw new Error('Falha na resposta da API');
+
+                const data = await response.json();
+                renderCards(data);
+            } catch (error) {
+                console.error('Erro:', error);
+                errorContainer.classList.remove('hidden');
+                // Mock para visualização se a API falhar
+                renderMockData();
+            } finally {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function renderCards(items) {
+            const grid = document.getElementById('cardsGrid');
+            
+            if (!items || items.length === 0) {
+                grid.innerHTML = '<p class="col-span-full text-center py-10">Nenhum registro encontrado.</p>';
+                return;
+            }
+
+            items.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'custom-card';
+                
+                // Formata o conteúdo de forma genérica para suportar diferentes estruturas de objeto
+                let contentHTML = `<h3 class="text-xl font-bold mb-3" style="color: var(--primary)">${item.name || item.title || 'Item de Configuração'}</h3>`;
+                
+                for (let [key, value] of Object.entries(item)) {
+                    if (key !== 'name' && key !== 'title' && typeof value !== 'object') {
+                        contentHTML += `
+                            <div class="mb-2">
+                                <span class="text-xs uppercase opacity-60 font-bold">${key}:</span>
+                                <p class="text-sm">${value}</p>
+                            </div>
+                        `;
+                    }
+                }
+
+                card.innerHTML = contentHTML;
+                grid.appendChild(card);
+            });
+        }
+
+        // Função apenas para demonstrar como ficaria caso a API estivesse ativa
+        function renderMockData() {
+            console.log("Exibindo dados de exemplo por falha na conexão com localhost:8080");
+        }
+
+        // Inicialização
+        window.onload = () => {
+            fetchData();
+        };
+    </script>
+</body>
+</html>

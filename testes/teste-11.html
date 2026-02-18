@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Flow | Gerenciador de Projetos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Definição de Temas Customizados com Contraste Aprimorado */
+        :root[data-theme="light"] {
+            --bg: #f9fafb; --card: #ffffff; --text: #111827; --text-secondary: #4b5563; --primary: #2563eb; --accent: #3b82f6; --border: #e5e7eb; --card-muted: #f3f4f6;
+        }
+        :root[data-theme="dark"] {
+            --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --text-secondary: #94a3b8; --primary: #3b82f6; --accent: #60a5fa; --border: #334155; --card-muted: #161e2e;
+        }
+        :root[data-theme="solarized"] {
+            --bg: #fdf6e3; --card: #eee8d5; --text: #073642; --text-secondary: #586e75; --primary: #268bd2; --accent: #2aa198; --border: #d5c4a1; --card-muted: #e6dfcb;
+        }
+        :root[data-theme="cyberpunk"] {
+            --bg: #050505; --card: #121212; --text: #00ff9f; --text-secondary: #00b36f; --primary: #f50057; --accent: #ffee00; --border: #f50057; --card-muted: #1a1a1a;
+        }
+        :root[data-theme="matrix"] {
+            --bg: #000000; --card: #0a0a0a; --text: #00ff41; --text-secondary: #008f11; --primary: #00ff41; --accent: #003b00; --border: #008f11; --card-muted: #050505;
+        }
+        :root[data-theme="dracula"] {
+            --bg: #282a36; --card: #44475a; --text: #f8f8f2; --text-secondary: #bd93f9; --primary: #ff79c6; --accent: #50fa7b; --border: #6272a4; --card-muted: #383a59;
+        }
+
+        body { 
+            background-color: var(--bg); 
+            color: var(--text); 
+            transition: background-color 0.4s ease, color 0.4s ease; 
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        
+        .card { 
+            background-color: var(--card); 
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Classes utilitárias para garantir visibilidade */
+        .bg-muted { background-color: var(--card-muted) !important; }
+        .text-secondary { color: var(--text-secondary); }
+        .btn-primary { background-color: var(--primary); color: #fff; }
+        .btn-primary:hover { filter: brightness(1.1); }
+        
+        /* Reset de inputs para evitar fundos brancos nativos do navegador */
+        input, select, textarea, button {
+            background-color: var(--card);
+            color: var(--text);
+            border-color: var(--border);
+        }
+
+        input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+
+        /* Correção específica para Tailwind classes de background cinza em temas escuros */
+        [data-theme="dark"] .bg-gray-50, [data-theme="dracula"] .bg-gray-50,
+        [data-theme="dark"] .bg-gray-100, [data-theme="dracula"] .bg-gray-100 {
+            background-color: var(--card-muted) !important;
+            color: var(--text) !important;
+        }
+
+        #loader {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+        
+        .modal.active { display: flex; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .hidden-view { display: none; }
+        
+        .progress-bar {
+            height: 12px;
+            border-radius: 999px;
+            background: var(--border);
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        /* Custom Hover Effects for Cyberpunk/Matrix */
+        [data-theme="cyberpunk"] .card:hover, [data-theme="matrix"] .card:hover {
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        /* Layout Centralizado */
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <div id="loader">
+        <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-white mb-4"></div>
+            <p class="text-white font-medium">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- Header Centralizado -->
+    <header class="card shadow-lg sticky top-0 z-50 border-b">
+        <div class="content-container px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-tighter uppercase leading-none">Personal<span style="color:var(--primary)">Flow</span></h1>
+                    <span class="text-[10px] uppercase tracking-[0.2em] font-bold opacity-50">Gerenciador</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-6">
+                <!-- Theme Switcher Desktop -->
+                <div class="hidden md:flex gap-3 border-r pr-6 border-gray-200 dark:border-gray-700">
+                    <button onclick="setTheme('light')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Claro"><i class="fas fa-sun text-orange-500"></i></button>
+                    <button onclick="setTheme('dark')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Escuro"><i class="fas fa-moon text-indigo-400"></i></button>
+                    <button onclick="setTheme('solarized')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Solarized"><i class="fas fa-certificate text-yellow-600"></i></button>
+                    <button onclick="setTheme('cyberpunk')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Cyberpunk"><i class="fas fa-bolt text-pink-500"></i></button>
+                    <button onclick="setTheme('matrix')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Matrix"><i class="fas fa-terminal text-green-500"></i></button>
+                    <button onclick="setTheme('dracula')" class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-800 transition" title="Dracula"><i class="fas fa-ghost text-purple-400"></i></button>
+                </div>
+                
+                <button onclick="logout()" class="flex items-center gap-2 font-bold text-sm text-red-500 hover:text-red-600 px-3 py-2 rounded-lg transition hover:bg-red-50 dark:hover:bg-red-900/10">
+                    <i class="fas fa-power-off"></i> <span class="hidden sm:inline">SAIR</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <div class="content-container px-4 py-10">
+            
+            <!-- Dashboard View -->
+            <div id="view-dashboard">
+                <!-- Ativos -->
+                <section class="mb-12">
+                    <div class="flex items-center justify-between mb-8">
+                        <h2 class="text-2xl font-extrabold flex items-center gap-3">
+                            <span class="w-2 h-8 bg-blue-500 rounded-full"></span>
+                            Projetos Ativos
+                        </h2>
+                    </div>
+                    <div id="active-projects-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        <!-- Projetos ativos injetados via JS -->
+                    </div>
+                </section>
+
+                <!-- Cards de Configuração (Criação) -->
+                <section class="mb-12">
+                    <h2 class="text-xl font-bold mb-6 flex items-center gap-3 opacity-80">
+                        <i class="fas fa-plus-circle text-green-500"></i> Iniciar Novo Planejamento
+                    </h2>
+                    <div id="config-cards" class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        <!-- Cards de config injetados via JS -->
+                    </div>
+                </section>
+
+                <!-- Inativos -->
+                <section class="mb-12 pt-8 border-t border-dashed">
+                    <h2 class="text-lg font-bold mb-6 flex items-center gap-3 opacity-60">
+                        <i class="fas fa-box-archive"></i> Arquivo de Projetos
+                    </h2>
+                    <div id="inactive-projects-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                        <!-- Projetos inativos injetados via JS -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Details View (Itens do Projeto) -->
+            <div id="view-project-details" class="hidden-view">
+                <div class="flex justify-between items-center mb-8">
+                    <button onclick="showView('dashboard')" class="px-4 py-2 rounded-xl border font-bold text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition flex items-center gap-2">
+                        <i class="fas fa-chevron-left"></i> Painel Geral
+                    </button>
+                </div>
+                
+                <div id="project-header-info" class="card p-8 rounded-3xl mb-10 shadow-xl overflow-hidden relative">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-primary opacity-5 rounded-full -mr-20 -mt-20"></div>
+                </div>
+
+                <!-- Novo Formulário Centralizado -->
+                <div class="max-w-4xl mx-auto mb-16">
+                    <div class="card p-8 rounded-3xl shadow-lg">
+                        <h3 class="text-xl font-bold mb-6 flex items-center gap-2">
+                            <i class="fas fa-cart-plus text-primary"></i> Adicionar Novo Item ao Projeto
+                        </h3>
+                        <form id="form-add-item" class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+                            <div class="md:col-span-4">
+                                <label class="block text-xs font-bold uppercase tracking-wider mb-2 opacity-60">Descrição</label>
+                                <input type="text" id="item-name" required class="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/50" placeholder="Ex: Geladeira, Pintor...">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold uppercase tracking-wider mb-2 opacity-60">Valor Estimado</label>
+                                <div class="relative">
+                                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold opacity-40">R$</span>
+                                    <input type="number" id="item-value" step="0.01" class="w-full pl-12 pr-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/50" value="0">
+                                </div>
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-bold uppercase tracking-wider mb-2 opacity-60">Localização</label>
+                                <select id="item-category" class="w-full px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none">
+                                    <option value="antigo">Imóvel Antigo / Origem</option>
+                                    <option value="novo" selected>Imóvel Novo / Destino</option>
+                                </select>
+                            </div>
+                            <div class="md:col-span-2">
+                                <button type="submit" class="w-full py-3.5 btn-primary rounded-xl font-black uppercase tracking-widest shadow-lg shadow-blue-500/40 hover:translate-y-[-2px] active:translate-y-[0]">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">				
+					<!-- Listagem Antigo -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4 mb-2">
+                            <h3 id="label-old-home" class="text-2xl font-black uppercase tracking-tight opacity-60">Imóvel Antigo</h3>
+                            <div class="flex-grow h-[2px] bg-gradient-to-r from-gray-500 to-transparent opacity-20"></div>
+                        </div>
+                        <div id="list-items-antigo" class="grid grid-cols-1 gap-4"></div>
+                    </div>
+					
+                    <!-- Listagem Novo -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-4 mb-2">
+                            <h3 id="label-new-home" class="text-2xl font-black uppercase tracking-tight">Imóvel Novo</h3>
+                            <div class="flex-grow h-[2px] bg-gradient-to-r from-blue-500 to-transparent opacity-20"></div>
+                        </div>
+                        <div id="list-items-novo" class="grid grid-cols-1 gap-4"></div>
+                    </div>  
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Centralizado -->
+    <footer class="mt-20 border-t py-12">
+        <div class="content-container px-6 text-center">
+            <div class="mb-4 flex justify-center gap-4 text-xl opacity-40">
+                <i class="fab fa-github"></i>
+                <i class="fab fa-linkedin"></i>
+            </div>
+            <p class="text-sm font-medium tracking-wide">
+                Desenvolvido por <span class="text-primary font-bold">Daniel Aleixo Correa</span> &copy; 2026
+            </p>
+            <p class="text-xs uppercase tracking-[0.3em] opacity-40 mt-2">Lins, SP • Brasil</p>
+        </div>
+    </footer>
+
+    <!-- Modais -->
+    <div id="modal-mudanca" class="modal">
+        <div class="card p-10 rounded-3xl w-full max-w-lg shadow-2xl">
+            <h2 class="text-3xl font-black mb-8">CONFIGURAR MUDANÇA</h2>
+            <form id="form-mudanca" class="space-y-6">
+                <input type="hidden" id="mudanca-config-id">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold uppercase mb-2">Título da Mudança</label>
+                            <input type="text" id="m-title" required class="w-full p-4 rounded-xl uppercase font-bold" placeholder="EX: MUDANÇA PARA APTO NOVO">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-2">Data Prevista</label>
+                            <input type="date" id="m-date" required class="w-full p-4 rounded-xl">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-2">Orçamento Total (R$)</label>
+                            <input type="number" id="m-budget" step="0.01" required class="w-full p-4 rounded-xl font-bold">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-2">Imóvel Atual</label>
+                            <select id="m-old" class="w-full p-4 rounded-xl">
+                                <option value="Apartamento">Apartamento</option>
+                                <option value="Casa">Casa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase mb-2">Imóvel Novo</label>
+                            <select id="m-new" class="w-full p-4 rounded-xl">
+                                <option value="Apartamento">Apartamento</option>
+                                <option value="Casa">Casa</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-6">
+                    <button type="button" onclick="closeModals()" class="flex-1 py-4 font-bold border rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800 transition">Cancelar</button>
+                    <button type="submit" class="flex-1 py-4 btn-primary rounded-2xl font-black shadow-lg shadow-blue-500/30">CRIAR PROJETO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Viagem -->
+    <div id="modal-viagem" class="modal">
+        <div class="card p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <h2 class="text-3xl font-black mb-8">PLANEJAR VIAGEM</h2>
+            <form id="form-viagem" class="space-y-6">
+                <input type="hidden" id="viagem-config-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-2">Destino</label>
+                        <input type="text" id="v-title" required class="w-full p-4 rounded-xl uppercase font-bold" placeholder="EX: EUROPA 2026">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-2">Data da Viagem</label>
+                        <input type="date" id="v-date" required class="w-full p-4 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-2">Orçamento Previsto (R$)</label>
+                        <input type="number" id="v-budget" step="0.01" required class="w-full p-4 rounded-xl font-bold">
+                    </div>
+                </div>
+                <div class="flex gap-4 pt-6">
+                    <button type="button" onclick="closeModals()" class="flex-1 py-4 font-bold border rounded-2xl hover:bg-gray-50 dark:hover:bg-gray-800">Cancelar</button>
+                    <button type="submit" class="flex-1 py-4 btn-primary rounded-2xl font-black shadow-lg">SALVAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Item -->
+    <div id="modal-edit-item" class="modal">
+        <div class="card p-10 rounded-3xl w-full max-w-md shadow-2xl">
+            <h2 class="text-2xl font-black mb-6">EDITAR ITEM</h2>
+            <form id="form-edit-item" class="space-y-5">
+                <input type="hidden" id="edit-item-id">
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-2 tracking-widest opacity-60">Novo Valor</label>
+                    <input type="number" id="edit-item-value" step="0.01" required class="w-full p-4 rounded-xl font-black text-xl text-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase mb-2 tracking-widest opacity-60">Comentários</label>
+                    <textarea id="edit-item-desc" class="w-full p-4 rounded-xl min-h-[100px]" placeholder="Observações importantes..."></textarea>
+                </div>
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeModals()" class="flex-1 py-4 border rounded-2xl font-bold hover:bg-gray-50 dark:hover:bg-gray-800">FECHAR</button>
+                    <button type="submit" class="flex-1 py-4 btn-primary rounded-2xl font-black">ATUALIZAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÕES API ---
+        const BASE_API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === ""
+            ? "http://localhost:8080/api"
+            : "https://mudanca-ap.onrender.com/api";
+
+        let currentProjectId = null;
+        let currentProjectData = null;
+
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        const logout = () => {
+            localStorage.removeItem('auth_token');
+            window.location.href = 'index.html';
+        };
+
+        const showLoader = (show) => {
+            document.getElementById('loader').style.display = show ? 'flex' : 'none';
+        };
+
+        const formatCurrency = (val) => {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        };
+
+        const handleApiError = (err, response) => {
+            console.error("Erro na API:", err);
+            if (response && response.status === 403) {
+                window.location.href = 'index.html';
+                return;
+            }
+        };
+
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('user-theme', theme);
+        };
+
+        const showView = (viewId) => {
+            document.getElementById('view-dashboard').classList.add('hidden-view');
+            document.getElementById('view-project-details').classList.add('hidden-view');
+            document.getElementById(`view-${viewId}`).classList.remove('hidden-view');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if(viewId === 'dashboard') loadDashboard();
+        };
+
+        async function loadDashboard() {
+            showLoader(true);
+            try {
+                const configRes = await fetch(`${BASE_API}/project/config/all`, { headers: getHeaders() });
+                const configs = await configRes.json();
+                renderConfigs(configs);
+
+                const projectsRes = await fetch(`${BASE_API}/project/projects`, { headers: getHeaders() });
+                const projects = await projectsRes.json();
+                renderProjects(projects);
+            } catch (err) {
+                handleApiError(err);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function renderConfigs(configs) {
+            const container = document.getElementById('config-cards');
+            container.innerHTML = '';
+            configs.filter(c => c.active).forEach(config => {
+                const div = document.createElement('div');
+                div.className = "card p-8 rounded-3xl text-center cursor-pointer hover:shadow-2xl hover:border-blue-500/50 flex flex-col items-center group";
+                div.onclick = () => openProjectModal(config);
+                div.innerHTML = `
+                    <div class="w-16 h-16 rounded-2xl bg-blue-500/10 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition duration-500" style="color:var(--primary)">
+                        <i class="${config.icon || 'fas fa-rocket'}"></i>
+                    </div>
+                    <h3 class="font-black text-sm uppercase tracking-wider mb-1">${config.label}</h3>
+                    <p class="text-[10px] text-secondary font-bold uppercase tracking-widest opacity-50">${config.subtitle || ''}</p>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function renderProjects(projects) {
+            const activeList = document.getElementById('active-projects-list');
+            const inactiveList = document.getElementById('inactive-projects-list');
+            activeList.innerHTML = '';
+            inactiveList.innerHTML = '';
+
+            projects.forEach(p => {
+                const isActive = p.status === 'active';
+                const div = document.createElement('div');
+                div.className = `card p-6 rounded-[2rem] shadow-sm flex flex-col justify-between group h-full relative overflow-hidden`;
+                
+                const decorColor = p.type === 'mudanca' ? 'bg-blue-500' : 'bg-purple-500';
+
+                const html = `
+                    <div class="absolute top-0 left-0 w-1.5 h-full ${decorColor}"></div>
+                    <div class="mb-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-muted text-secondary">${p.type}</span>
+                            <button onclick="toggleProjectStatus('${p.id}', '${p.status}')" class="text-secondary opacity-40 hover:opacity-100 transition">
+                                <i class="fas ${isActive ? 'fa-box-archive' : 'fa-rotate-left'}"></i>
+                            </button>
+                        </div>
+                        <h3 class="font-black text-lg leading-tight mb-2 tracking-tighter">${p.title}</h3>
+                        <p class="text-[10px] text-secondary font-bold uppercase tracking-widest mb-3"><i class="far fa-calendar mr-1"></i> ${new Date(p.date).toLocaleDateString()}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        ${isActive ? `<button onclick="enterProject('${p.id}')" class="flex-1 py-3 btn-primary rounded-xl text-[10px] font-black tracking-widest shadow-lg shadow-blue-500/20">ABRIR</button>` : ''}
+                        <button onclick="toggleProjectStatus('${p.id}', '${p.status}')" class="px-4 py-3 border rounded-xl text-[9px] font-black uppercase tracking-widest transition hover:bg-gray-100 dark:hover:bg-gray-800">${isActive ? 'Arquivar' : 'Reativar'}</button>
+                    </div>
+                `;
+                div.innerHTML = html;
+                
+                if (isActive) activeList.appendChild(div);
+                else inactiveList.appendChild(div);
+            });
+        }
+
+        async function toggleProjectStatus(id, currentStatus) {
+            showLoader(true);
+            const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+            try {
+                await fetch(`${BASE_API}/project/projects/${id}`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+                loadDashboard();
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        }
+
+        function openProjectModal(config) {
+            closeModals();
+            if (config.id === 'mudanca') {
+                document.getElementById('mudanca-config-id').value = config.id;
+                document.getElementById('modal-mudanca').classList.add('active');
+            } else {
+                document.getElementById('viagem-config-id').value = config.id;
+                document.getElementById('modal-viagem').classList.add('active');
+            }
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('active'));
+        }
+
+        const processSubmit = async (data) => {
+            showLoader(true);
+            try {
+                await fetch(`${BASE_API}/project/projects`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(data)
+                });
+                closeModals();
+                loadDashboard();
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        };
+
+        document.getElementById('form-mudanca').onsubmit = (e) => {
+            e.preventDefault();
+            processSubmit({
+                configId: document.getElementById('mudanca-config-id').value,
+                type: 'mudanca',
+                title: document.getElementById('m-title').value.toUpperCase(),
+                date: document.getElementById('m-date').value,
+                status: 'active',
+				idProjeto: currentProjectId,
+                extras: {
+                    budget: parseFloat(document.getElementById('m-budget').value),
+                    oldHome: document.getElementById('m-old').value,
+                    newHome: document.getElementById('m-new').value
+                }
+            });
+        };
+
+        document.getElementById('form-viagem').onsubmit = (e) => {
+            e.preventDefault();
+            processSubmit({
+                configId: document.getElementById('viagem-config-id').value,
+                type: 'viagem',
+                title: document.getElementById('v-title').value.toUpperCase(),
+                date: document.getElementById('v-date').value,
+                status: 'active',
+                extras: {
+                    budget: parseFloat(document.getElementById('v-budget').value)
+                }
+            });
+        };
+
+        async function enterProject(id) {
+            currentProjectId = id;
+            showView('project-details');
+            loadProjectDetails();
+        }
+
+        async function loadProjectDetails() {
+            showLoader(true);
+            try {
+                const pRes = await fetch(`${BASE_API}/project/projects`, { headers: getHeaders() });
+                const all = await pRes.json();
+                currentProjectData = all.find(x => x.id === currentProjectId);
+                
+                const iRes = await fetch(`${BASE_API}/itens?idProjeto=${currentProjectId}`, { headers: getHeaders() });
+                const itens = await iRes.json();
+                
+                renderProjectHeader(currentProjectData, itens);
+                renderItensList(itens);
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        }
+
+        function renderProjectHeader(project, itens) {
+            const totalGasto = itens.reduce((acc, curr) => acc + (curr.value || 0), 0);
+            const budget = project.extras?.budget || 0;
+            const saldo = budget - totalGasto;
+            const isEstourado = saldo < 0;
+            
+            const completados = itens.filter(i => i.completed).length;
+            const percent = itens.length ? Math.round((completados / itens.length) * 100) : 0;
+
+            document.getElementById('label-new-home').innerText = project.extras?.newHome || 'Destino';
+            document.getElementById('label-old-home').innerText = project.extras?.oldHome || 'Origem';
+
+            document.getElementById('project-header-info').innerHTML = `
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 relative z-10">
+                    <div class="space-y-4">
+                        <span class="text-[10px] font-black uppercase tracking-[0.5em] text-primary">Detalhamento do Plano</span>
+                        <h2 class="text-4xl font-black tracking-tighter uppercase">${project.title}</h2>
+                        <div class="flex flex-wrap gap-4">
+                            <div class="px-6 py-4 rounded-2xl bg-muted border">
+                                <p class="text-[10px] font-black uppercase opacity-40 mb-1">Total Planejado</p>
+                                <p class="text-2xl font-black">${formatCurrency(budget)}</p>
+                            </div>
+                            <div class="px-6 py-4 rounded-2xl ${isEstourado ? 'bg-red-500 text-white' : 'bg-primary/5 border border-primary/20'}">
+                                <p class="text-[10px] font-black uppercase ${isEstourado ? 'opacity-80' : 'opacity-40'} mb-1">Saldo Restante</p>
+                                <p class="text-2xl font-black">${formatCurrency(saldo)}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-72 bg-muted p-6 rounded-3xl border">
+                        <div class="flex justify-between items-end mb-3">
+                            <p class="text-[10px] font-black uppercase opacity-40">Status de Conclusão</p>
+                            <p class="text-2xl font-black text-primary">${percent}%</p>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${percent}%"></div>
+                        </div>
+                        ${isEstourado ? '<p class="text-red-500 text-[10px] font-black uppercase tracking-wider mt-4 animate-pulse"><i class="fas fa-triangle-exclamation mr-1"></i> Atenção: Orçamento estourado!</p>' : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderItensList(itens) {
+            const listNovo = document.getElementById('list-items-novo');
+            const listAntigo = document.getElementById('list-items-antigo');
+            listNovo.innerHTML = '';
+            listAntigo.innerHTML = '';
+
+            itens.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "card p-6 rounded-2xl flex items-center justify-between group transition-all hover:translate-x-1";
+                div.innerHTML = `
+                    <div class="flex items-center gap-5">
+                        <button onclick="toggleItemComplete('${item.id}', ${!item.completed})" class="text-3xl transition ${item.completed ? 'text-green-500' : 'text-secondary opacity-20 hover:opacity-40'}">
+                            <i class="fas ${item.completed ? 'fa-square-check' : 'fa-square'}"></i>
+                        </button>
+                        <div>
+                            <h4 class="font-bold text-lg ${item.completed ? 'line-through opacity-30' : ''}">${item.name}</h4>
+                            <div class="flex gap-3 items-center">
+                                <p class="text-sm font-black text-primary">${formatCurrency(item.value)}</p>
+                                ${item.description ? `<p class="text-xs text-secondary italic opacity-60">• ${item.description}</p>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openEditItem('${item.id}', ${item.value}, '${item.description || ''}')" class="w-10 h-10 rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-500/10 transition"><i class="fas fa-pen-to-square"></i></button>
+                        <button onclick="deleteItem('${item.id}')" class="w-10 h-10 rounded-xl flex items-center justify-center text-red-500 hover:bg-red-500/10 transition"><i class="fas fa-trash-can"></i></button>
+                    </div>
+                `;
+                if(item.category === 'novo') listNovo.appendChild(div);
+                else listAntigo.appendChild(div);
+            });
+        }
+
+        document.getElementById('form-add-item').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                idProjeto: currentProjectId,
+                name: document.getElementById('item-name').value,
+                value: parseFloat(document.getElementById('item-value').value),
+                category: document.getElementById('item-category').value
+            };
+            showLoader(true);
+            try {
+                await fetch(`${BASE_API}/itens`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                document.getElementById('form-add-item').reset();
+                loadProjectDetails();
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        };
+
+        async function toggleItemComplete(id, completed) {
+            showLoader(true);
+            try {
+                await fetch(`${BASE_API}/itens/${id}/completed`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify({ completed })
+                });
+                loadProjectDetails();
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        }
+
+        function openEditItem(id, val, desc) {
+            document.getElementById('edit-item-id').value = id;
+            document.getElementById('edit-item-value').value = val;
+            document.getElementById('edit-item-desc').value = desc;
+            document.getElementById('modal-edit-item').classList.add('active');
+        }
+
+        document.getElementById('form-edit-item').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('edit-item-id').value;
+            const payload = {
+                value: parseFloat(document.getElementById('edit-item-value').value),
+                description: document.getElementById('edit-item-desc').value
+            };
+            showLoader(true);
+            try {
+                await fetch(`${BASE_API}/itens/${id}/value`, {
+                    method: 'PATCH',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                closeModals();
+                loadProjectDetails();
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        };
+
+        async function deleteItem(id) {
+            if(!confirm("Deseja excluir este item permanentemente?")) return;
+            showLoader(true);
+            try {
+                await fetch(`${BASE_API}/itens/${id}`, { method: 'DELETE', headers: getHeaders() });
+                loadProjectDetails();
+            } catch (err) { handleApiError(err); }
+            finally { showLoader(false); }
+        }
+
+        // --- INICIALIZAÇÃO ---
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('user-theme') || 'light';
+            setTheme(savedTheme);
+            loadDashboard();
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador Pessoal - Mudanças & Viagens</title>
+    
+    <!-- Font Awesome CDN - Versão 6.5.1 (Garante suporte aos ícones mais novos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" xintegrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- Fonte Google Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CSS VARIABLES & THEMES --- */
+        :root {
+            /* Default: Cyberpunk */
+            --bg-color: #0b0c15;
+            --card-bg: #161823;
+            --text-primary: #e0e0e0;
+            --text-secondary: #94a3b8;
+            --accent-color: #00ff9f; 
+            --accent-hover: #00cc80;
+            --secondary-accent: #ff0055; 
+            --border-color: #2d2f3d;
+            --success-color: #00ff9f;
+            --warning-color: #fcee0a;
+            --danger-color: #ff2a2a;
+            --info-color: #00d9ff;
+            --font-main: 'Inter', sans-serif;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            --glow: 0 0 10px rgba(0, 255, 159, 0.2);
+            --radius: 8px;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --secondary-accent: #db2777;
+            --border-color: #e2e8f0;
+            --shadow: 0 2px 4px rgba(0,0,0,0.05);
+            --glow: none;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a1a;
+            --card-bg: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-color: #646cff;
+            --secondary-accent: #ff4081;
+            --border-color: #404040;
+            --glow: none;
+        }
+
+        [data-theme="dracula"] {
+            --bg-color: #282a36;
+            --card-bg: #44475a;
+            --text-primary: #f8f8f2;
+            --text-secondary: #6272a4;
+            --accent-color: #bd93f9;
+            --secondary-accent: #ff79c6;
+            --border-color: #6272a4;
+            --success-color: #50fa7b;
+            --danger-color: #ff5555;
+            --glow: none;
+        }
+
+        [data-theme="solarized"] {
+            --bg-color: #fdf6e3;
+            --card-bg: #eee8d5;
+            --text-primary: #073642;
+            --text-secondary: #586e75;
+            --accent-color: #2aa198;
+            --secondary-accent: #d33682;
+            --border-color: #93a1a1;
+            --glow: none;
+        }
+
+        [data-theme="matrix"] {
+            --bg-color: #000000;
+            --card-bg: #0d0d0d;
+            --text-primary: #00ff00;
+            --text-secondary: #008f11;
+            --accent-color: #00ff00;
+            --secondary-accent: #ffffff;
+            --border-color: #003300;
+            --danger-color: #ff0000;
+            --shadow: 0 0 5px #003300;
+            --glow: 0 0 5px #00ff00;
+            font-family: 'Courier New', monospace;
+        }
+
+        /* --- GLOBAL STYLES --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            transition: background-color 0.3s, color 0.3s;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .hidden { display: none !important; }
+        
+        .btn {
+            padding: 8px 16px; border: none; border-radius: var(--radius); cursor: pointer;
+            font-weight: 600; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-primary { background-color: var(--accent-color); color: #000; box-shadow: var(--glow); }
+        .btn-primary:hover { background-color: var(--accent-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--accent-color); color: var(--accent-color); }
+        .btn-outline:hover { background: var(--accent-color); color: #000; }
+        .btn-sm { font-size: 0.8rem; padding: 6px 12px; }
+
+        /* --- HEADER --- */
+        header {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+            background-color: var(--card-bg); padding: 15px 20px; border-bottom: 1px solid var(--border-color);
+            box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100;
+        }
+        .header-brand h1 { font-size: 1.2rem; color: var(--accent-color); text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
+        .header-brand p { font-size: 0.8rem; color: var(--text-secondary); }
+        .header-controls { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        
+        .theme-switcher { display: flex; gap: 8px; background: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 20px; }
+        .theme-icon { cursor: pointer; font-size: 1.1rem; color: var(--text-secondary); transition: color 0.2s, transform 0.2s; }
+        .theme-icon:hover { transform: scale(1.2); color: var(--accent-color); }
+
+        .user-info { font-size: 0.85rem; text-align: right; border-right: 1px solid var(--border-color); padding-right: 15px; }
+        .user-info span { display: block; font-weight: bold; color: var(--text-primary); }
+
+        /* --- DASHBOARD GRID --- */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr; gap: 30px; margin-top: 20px; }
+        @media(min-width: 992px) {
+            .dashboard-grid { grid-template-columns: 320px 1fr; }
+        }
+
+        /* --- CONFIG CARDS --- */
+        .config-section h2 { margin-bottom: 20px; font-size: 1.1rem; text-transform: uppercase; color: var(--accent-color); }
+        .config-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: var(--radius); padding: 20px; margin-bottom: 15px;
+            cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; align-items: center; gap: 20px;
+        }
+        .config-card:hover { border-color: var(--accent-color); transform: translateX(5px); box-shadow: var(--glow); }
+        .config-icon-wrapper { 
+            width: 50px; height: 50px; background: rgba(0,0,0,0.2); 
+            display: flex; align-items: center; justify-content: center; 
+            border-radius: 12px; font-size: 1.8rem; color: var(--secondary-accent);
+        }
+
+        /* --- PROJECT CARDS --- */
+        .status-group { margin-bottom: 40px; }
+        .status-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; font-size: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .projects-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        .project-card {
+            background-color: var(--card-bg); border-radius: var(--radius); padding: 20px;
+            border-left: 4px solid var(--border-color); box-shadow: var(--shadow);
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .project-card.active { border-left-color: var(--success-color); }
+        .project-card.finished { border-left-color: var(--info-color); }
+        .project-card.inactive { border-left-color: var(--danger-color); }
+
+        .card-top { display: flex; justify-content: space-between; align-items: center; }
+        .card-badge { font-size: 0.7rem; font-weight: bold; background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; }
+        .card-title { font-size: 1.2rem; font-weight: 700; color: var(--text-primary); }
+        .card-meta { display: flex; align-items: center; gap: 15px; font-size: 0.85rem; color: var(--text-secondary); }
+
+        /* --- LOADER --- */
+        #loader {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8); 
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+        }
+        .spinner { width: 50px; height: 50px; border: 4px solid rgba(255,255,255,0.1); border-top-color: var(--accent-color); border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- TOAST --- */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; }
+        .toast { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px 20px; border-radius: var(--radius); margin-top: 10px; box-shadow: var(--shadow); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 10px; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* --- MODALS --- */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: 0.3s; padding: 20px; }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal { background: var(--card-bg); width: 100%; max-width: 500px; border-radius: var(--radius); border: 1px solid var(--border-color); padding: 30px; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+
+        /* --- FORMS --- */
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-secondary); }
+        .form-control { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: var(--radius); outline: none; }
+        .form-control:focus { border-color: var(--accent-color); }
+
+        /* --- DETAILS VIEW --- */
+        .details-grid { display: grid; grid-template-columns: 1fr; gap: 30px; }
+        @media(min-width: 992px) { .details-grid { grid-template-columns: 350px 1fr; } }
+
+        .progress-ui { height: 12px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow: hidden; margin: 15px 0; }
+        .progress-fill { height: 100%; background: var(--accent-color); transition: 0.5s width; }
+
+        footer { text-align: center; padding: 40px 20px; color: var(--text-secondary); font-size: 0.8rem; border-top: 1px solid var(--border-color); margin-top: 50px; }
+    </style>
+</head>
+<body data-theme="cyberpunk">
+
+    <div id="loader" class="hidden"><div class="spinner"></div></div>
+    <div id="toast-container"></div>
+
+    <header>
+        <div class="header-brand">
+            <h1><i class="fa-solid fa-layer-group"></i> Organizer</h1>
+            <p>Gerenciamento inteligente de projetos</p>
+        </div>
+        
+        <div class="header-controls">
+            <div class="theme-switcher">
+                <i class="fa-solid fa-sun theme-icon" onclick="app.setTheme('light')" title="Light"></i>
+                <i class="fa-solid fa-moon theme-icon" onclick="app.setTheme('dark')" title="Dark"></i>
+                <i class="fa-solid fa-terminal theme-icon" onclick="app.setTheme('matrix')" title="Matrix"></i>
+                <i class="fa-solid fa-robot theme-icon" onclick="app.setTheme('cyberpunk')" title="Cyberpunk"></i>
+                <i class="fa-solid fa-dracula theme-icon" onclick="app.setTheme('dracula')" title="Dracula"></i>
+            </div>
+            
+            <div class="user-info" id="userInfoDisplay">
+                <span>Usuário Anônimo</span>
+            </div>
+            
+            <button class="btn btn-outline btn-sm" onclick="app.logout()">
+                <i class="fa-solid fa-power-off"></i> Sair
+            </button>
+        </div>
+    </header>
+
+    <main class="container">
+        
+        <!-- DASHBOARD VIEW -->
+        <div id="view-dashboard">
+            <div class="dashboard-grid">
+                <aside>
+                    <div class="config-section">
+                        <h2><i class="fa-solid fa-plus-circle"></i> Novo Projeto</h2>
+                        <div id="config-list"></div>
+                    </div>
+                </aside>
+
+                <section>
+                    <div class="status-group">
+                        <div class="status-header" style="color: var(--success-color)">
+                            <i class="fa-solid fa-play-circle"></i> Ativos
+                        </div>
+                        <div id="list-active" class="projects-row"></div>
+                    </div>
+
+                    <div class="status-group">
+                        <div class="status-header" style="color: var(--info-color)">
+                            <i class="fa-solid fa-circle-check"></i> Finalizados
+                        </div>
+                        <div id="list-finished" class="projects-row"></div>
+                    </div>
+
+                    <div class="status-group">
+                        <div class="status-header" style="color: var(--danger-color)">
+                            <i class="fa-solid fa-circle-xmark"></i> Inativos
+                        </div>
+                        <div id="list-inactive" class="projects-row"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- DETAILS VIEW -->
+        <div id="view-details" class="hidden">
+            <button class="btn btn-outline" onclick="app.showDashboard()" style="margin-bottom: 30px;">
+                <i class="fa-solid fa-chevron-left"></i> Voltar ao Painel
+            </button>
+
+            <div id="project-header-content"></div>
+
+            <div class="details-grid">
+                <div class="add-item-form">
+                    <div class="config-card" style="cursor: default; display: block;">
+                        <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-cart-plus"></i> Adicionar Item</h3>
+                        <form onsubmit="app.handleAddItem(event)">
+                            <div class="form-group">
+                                <label>O que é?</label>
+                                <input type="text" id="item-desc" class="form-control" placeholder="Ex: Geladeira, Passagem..." required>
+                            </div>
+                            <div class="form-group">
+                                <label>Categoria</label>
+                                <select id="item-category" class="form-control" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Valor (R$)</label>
+                                <input type="number" id="item-value" class="form-control" placeholder="0.00" step="0.01">
+                            </div>
+                            <button type="submit" class="btn btn-primary" style="width: 100%">
+                                <i class="fa-solid fa-plus"></i> Adicionar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="items-list-container"></div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODALS -->
+    <div class="modal-overlay" id="modal-create">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title-type">Novo Projeto</h2>
+                <i class="fa-solid fa-xmark" style="cursor:pointer" onclick="app.closeModal('modal-create')"></i>
+            </div>
+            <form onsubmit="app.handleCreateProject(event)">
+                <input type="hidden" id="new-project-type">
+                <div class="form-group">
+                    <label>Título do Projeto</label>
+                    <input type="text" id="new-project-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Data Prevista</label>
+                    <input type="date" id="new-project-date" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Orçamento (R$)</label>
+                    <input type="number" id="new-project-budget" class="form-control" required min="0.01" step="0.01">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">Confirmar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT PRICE MODAL -->
+    <div class="modal-overlay" id="modal-edit-price">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Atualizar Valor</h2>
+                <i class="fa-solid fa-xmark" style="cursor:pointer" onclick="app.closeModal('modal-edit-price')"></i>
+            </div>
+            <form onsubmit="app.handleUpdatePrice(event)">
+                <input type="hidden" id="edit-item-id">
+                <div class="form-group">
+                    <label>Novo Valor (R$)</label>
+                    <input type="number" id="edit-item-value" class="form-control" step="0.01" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%">Salvar Alteração</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <p>Desenvolvido por <strong>Daniel Aleixo Correa</strong> &copy; 2026</p>
+        <p><i class="fa-solid fa-location-dot"></i> Lins, SP | Sistema de Gestão Pessoal</p>
+    </footer>
+
+    <script>
+        const BASE_API = ["localhost", "127.0.0.1", ""].includes(window.location.hostname)
+            ? "http://localhost:8082/api"
+            : "https://personal-organization.onrender.com/api";
+
+        const api = {
+            getHeaders: () => {
+                const token = localStorage.getItem('auth_token');
+                const headers = { 'Content-Type': 'application/json' };
+                if (token) headers['Authorization'] = `Bearer ${token}`;
+                return headers;
+            },
+
+            async request(endpoint, method = 'GET', body = null) {
+                app.toggleLoader(true);
+                try {
+                    const response = await fetch(`${BASE_API}${endpoint}`, {
+                        method,
+                        headers: this.getHeaders(),
+                        body: body ? JSON.stringify(body) : null
+                    });
+
+                    if (response.status === 401 || response.status === 403) {
+                        localStorage.removeItem('auth_token');
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok) throw new Error(data.message || `Erro do servidor: ${response.status}`);
+                    return data;
+                } catch (error) {
+                    app.showToast(error.message, 'error');
+                    throw error;
+                } finally {
+                    app.toggleLoader(false);
+                }
+            }
+        };
+
+        const app = {
+            state: { project: null, items: [] },
+
+            init() {
+                this.loadUser();
+                this.loadTheme();
+                this.renderDashboard();
+            },
+
+            loadUser() {
+                const token = localStorage.getItem('auth_token');
+                const display = document.getElementById('userInfoDisplay');
+                if (token) {
+                    try {
+                        const payload = JSON.parse(atob(token.split('.')[1]));
+                        display.innerHTML = `<span><i class="fa-solid fa-user-circle"></i> ${payload.name || 'Usuário'}</span>`;
+                    } catch(e) { display.innerHTML = '<span>Usuário</span>'; }
+                }
+            },
+
+            setTheme(t) {
+                document.body.setAttribute('data-theme', t);
+                localStorage.setItem('theme', t);
+            },
+
+            loadTheme() {
+                this.setTheme(localStorage.getItem('theme') || 'cyberpunk');
+            },
+
+            toggleLoader(s) { document.getElementById('loader').classList.toggle('hidden', !s); },
+
+            showToast(m, type = 'info') {
+                const c = document.getElementById('toast-container');
+                const t = document.createElement('div');
+                const icon = type === 'error' ? 'fa-circle-exclamation' : 'fa-circle-check';
+                t.className = `toast ${type}`;
+                t.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${m}</span>`;
+                c.appendChild(t);
+                setTimeout(() => t.remove(), 4000);
+            },
+
+            formatMoney: v => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v),
+
+            async renderDashboard() {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                document.getElementById('view-details').classList.add('hidden');
+
+                try {
+                    const types = await api.request('/project-types');
+                    const list = document.getElementById('config-list');
+                    list.innerHTML = '';
+                    
+                    types.filter(t => t.active).forEach(t => {
+                        const div = document.createElement('div');
+                        div.className = 'config-card';
+                        // Fallback de ícones se a API retornar algo quebrado ou vazio
+                        const icon = t.icon || (t.key === 'mudanca' ? 'fa-solid fa-truck-moving' : 'fa-solid fa-plane');
+                        div.innerHTML = `
+                            <div class="config-icon-wrapper"><i class="${icon}"></i></div>
+                            <div>
+                                <strong>${t.label}</strong>
+                                <p style="font-size:0.8rem; opacity:0.7">${t.subtitle || ''}</p>
+                            </div>
+                        `;
+                        div.onclick = () => this.openCreateModal(t.key, t.label);
+                        list.appendChild(div);
+                    });
+
+                    ['ACTIVE', 'FINISHED', 'INACTIVE'].forEach(s => this.loadList(s));
+                } catch(e) {}
+            },
+
+            async loadList(status) {
+                const projects = await api.request(`/projects?status=${status}`);
+                const container = document.getElementById(`list-${status.toLowerCase()}`);
+                container.innerHTML = projects.length ? '' : '<p style="opacity:0.5; font-size:0.8rem">Nenhum projeto.</p>';
+
+                projects.forEach(p => {
+                    const card = document.createElement('div');
+                    card.className = `project-card ${status.toLowerCase()}`;
+                    card.innerHTML = `
+                        <div class="card-top">
+                            <span class="card-badge"><i class="fa-solid fa-tag"></i> ${p.type}</span>
+                            <div style="display:flex; gap:10px">
+                                ${status === 'ACTIVE' ? `
+                                    <i class="fa-solid fa-circle-check" style="color:var(--info-color); cursor:pointer" onclick="app.updateStatus('${p.id}','FINISHED')"></i>
+                                    <i class="fa-solid fa-circle-minus" style="color:var(--danger-color); cursor:pointer" onclick="app.updateStatus('${p.id}','INACTIVE')"></i>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="card-title">${p.title}</div>
+                        <div class="card-meta">
+                            <span><i class="fa-solid fa-calendar-day"></i> ${p.date.split('-').reverse().join('/')}</span>
+                            <span><i class="fa-solid fa-wallet"></i> ${this.formatMoney(p.budget)}</span>
+                        </div>
+                        <button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="app.enterProject('${p.id}')">
+                            <i class="fa-solid fa-door-open"></i> Entrar
+                        </button>
+                    `;
+                    container.appendChild(card);
+                });
+            },
+
+            openCreateModal(k, l) {
+                document.getElementById('new-project-type').value = k;
+                document.getElementById('modal-title-type').innerText = `Novo: ${l}`;
+                this.openModal('modal-create');
+            },
+
+            openModal(id) { document.getElementById(id).classList.add('active'); },
+            closeModal(id) { document.getElementById(id).classList.remove('active'); },
+
+            async handleCreateProject(e) {
+                e.preventDefault();
+                const body = {
+                    type: document.getElementById('new-project-type').value,
+                    title: document.getElementById('new-project-title').value,
+                    date: document.getElementById('new-project-date').value,
+                    budget: parseFloat(document.getElementById('new-project-budget').value),
+                    status: 'ACTIVE'
+                };
+                try {
+                    await api.request('/projects', 'POST', body);
+                    this.closeModal('modal-create');
+                    this.renderDashboard();
+                    this.showToast('Projeto criado!');
+                } catch(e) {}
+            },
+
+            async updateStatus(id, s) {
+                try {
+                    await api.request(`/projects/${id}/status`, 'PATCH', { status: s });
+                    this.renderDashboard();
+                } catch(e) {}
+            },
+
+            async enterProject(id) {
+                const p = await api.request(`/projects/${id}`);
+                const items = await api.request(`/projects/items/${id}`);
+                this.state = { project: p, items };
+                this.renderDetails();
+                document.getElementById('view-dashboard').classList.add('hidden');
+                document.getElementById('view-details').classList.remove('hidden');
+            },
+
+            renderDetails() {
+                const { project: p, items } = this.state;
+                const totalSpent = items.reduce((a, b) => a + b.value, 0);
+                const remaining = p.budget - totalSpent;
+                
+                let progress = p.type === 'viagem' 
+                    ? Math.min((totalSpent / p.budget) * 100, 100)
+                    : (items.length ? (items.filter(i => i.completed).length / items.length) * 100 : 0);
+
+                document.getElementById('project-header-content').innerHTML = `
+                    <div class="config-card" style="display:block; cursor:default; margin-bottom:30px">
+                        <div style="display:flex; justify-content:space-between; align-items:start">
+                            <div>
+                                <h1 style="color:var(--accent-color)">${p.title}</h1>
+                                <p style="opacity:0.7"><i class="fa-solid fa-calendar"></i> ${p.date}</p>
+                            </div>
+                            <div style="text-align:right">
+                                <div style="font-size:1.5rem; font-weight:bold">${this.formatMoney(remaining)}</div>
+                                <small style="opacity:0.6">Saldo Restante</small>
+                            </div>
+                        </div>
+                        ${remaining < 0 ? `<div style="color:var(--danger-color); margin-top:10px; font-weight:bold"><i class="fa-solid fa-warning"></i> ORÇAMENTO ESTOURADO!</div>` : ''}
+                        <div class="progress-ui"><div class="progress-fill" style="width:${progress}%"></div></div>
+                        <small>Progresso Geral: ${Math.round(progress)}%</small>
+                    </div>
+                `;
+
+                const sel = document.getElementById('item-category');
+                sel.innerHTML = (p.selectedCategories || [{value:'Outros'}]).map(c => `<option value="${c.value}">${c.value}</option>`).join('');
+
+                const listCont = document.getElementById('items-list-container');
+                listCont.innerHTML = '';
+                
+                const groups = items.reduce((acc, i) => {
+                    acc[i.category] = acc[i.category] || [];
+                    acc[i.category].push(i);
+                    return acc;
+                }, {});
+
+                Object.entries(groups).forEach(([cat, its]) => {
+                    const g = document.createElement('div');
+                    g.className = 'config-card';
+                    g.style.cssText = 'display:block; cursor:default; margin-bottom:20px';
+                    g.innerHTML = `<h4 style="color:var(--secondary-accent); border-bottom:1px solid var(--border-color); padding-bottom:10px; margin-bottom:10px"><i class="fa-solid fa-folder-open"></i> ${cat}</h4>`;
+                    
+                    its.forEach(it => {
+                        const row = document.createElement('div');
+                        row.style.cssText = `display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); ${it.completed ? 'opacity:0.5' : ''}`;
+                        row.innerHTML = `
+                            <div style="display:flex; gap:12px; align-items:center">
+                                <i class="${it.completed ? 'fa-solid fa-check-square' : 'fa-regular fa-square'}" style="cursor:pointer; color:var(--accent-color)" onclick="app.toggleItem('${it.id}', ${!it.completed})"></i>
+                                <span style="${it.completed ? 'text-decoration:line-through' : ''}">${it.name}</span>
+                            </div>
+                            <div style="display:flex; gap:15px; align-items:center">
+                                <strong>${this.formatMoney(it.value)}</strong>
+                                <i class="fa-solid fa-edit" style="cursor:pointer" onclick="app.openEditPrice('${it.id}', ${it.value})"></i>
+                                <i class="fa-solid fa-trash-can" style="cursor:pointer; color:var(--danger-color)" onclick="app.deleteItem('${it.id}')"></i>
+                            </div>
+                        `;
+                        g.appendChild(row);
+                    });
+                    listCont.appendChild(g);
+                });
+            },
+
+            async handleAddItem(e) {
+                e.preventDefault();
+                const body = {
+                    name: document.getElementById('item-desc').value,
+                    value: parseFloat(document.getElementById('item-value').value) || 0,
+                    category: document.getElementById('item-category').value
+                };
+                await api.request(`/projects/items/${this.state.project.id}`, 'POST', body);
+                this.enterProject(this.state.project.id);
+            },
+
+            async toggleItem(id, c) {
+                await api.request(`/projects/items/${id}/completed`, 'PATCH', { completed: c });
+                this.enterProject(this.state.project.id);
+            },
+
+            openEditPrice(id, v) {
+                document.getElementById('edit-item-id').value = id;
+                document.getElementById('edit-item-value').value = v;
+                this.openModal('modal-edit-price');
+            },
+
+            async handleUpdatePrice(e) {
+                e.preventDefault();
+                const id = document.getElementById('edit-item-id').value;
+                const v = parseFloat(document.getElementById('edit-item-value').value);
+                await api.request(`/projects/items/${id}/price`, 'PATCH', { value: v });
+                this.closeModal('modal-edit-price');
+                this.enterProject(this.state.project.id);
+            },
+
+            async deleteItem(id) {
+                if(confirm('Excluir item?')) {
+                    await api.request(`/projects/items/${id}`, 'DELETE');
+                    this.enterProject(this.state.project.id);
+                }
+            },
+
+            showDashboard() { this.renderDashboard(); },
+            logout() { localStorage.removeItem('auth_token'); window.location.href = 'index.html'; }
+        };
+
+        window.onload = () => app.init();
+    </script>
+</body>
+</html>

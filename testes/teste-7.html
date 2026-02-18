@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Manager - Daniel Aleixo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Importando Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Definição de Temas Customizados */
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-color: #1e293b;
+            --accent-color: #3b82f6;
+            --header-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --accent-color: #60a5fa;
+            --header-bg: #1e293b;
+        }
+
+        [data-theme="solarized"] {
+            --bg-color: #fdf6e3;
+            --card-bg: #eee8d5;
+            --text-color: #586e75;
+            --accent-color: #268bd2;
+            --header-bg: #eee8d5;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-color: #000b1e;
+            --card-bg: #001a33;
+            --text-color: #00ff00;
+            --accent-color: #ff00ff;
+            --header-bg: #001a33;
+        }
+
+        [data-theme="matrix"] {
+            --bg-color: #0d0208;
+            --card-bg: #000000;
+            --text-color: #00ff41;
+            --accent-color: #008f11;
+            --header-bg: #000000;
+            --border-color: #00ff41;
+        }
+
+        [data-theme="dracula"] {
+            --bg-color: #282a36;
+            --card-bg: #44475a;
+            --text-color: #f8f8f2;
+            --accent-color: #bd93f9;
+            --header-bg: #44475a;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        [data-theme="matrix"] .card { border-color: var(--accent-color); }
+        .card:hover { transform: translateY(-4px); }
+
+        header { background-color: var(--header-bg); border-bottom: 1px solid rgba(0,0,0,0.1); }
+
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            place-items: center;
+            z-index: 9999;
+        }
+
+        .btn-theme {
+            padding: 8px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-theme:hover { background: rgba(128,128,128,0.2); }
+
+        /* Modal styling */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            color: var(--text-color);
+            max-width: 500px;
+            width: 100%;
+            border-radius: 12px;
+            padding: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="global-loader" class="loader-overlay">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
+    </div>
+
+    <!-- HEADER -->
+    <header class="p-4 flex justify-between items-center shadow-sm sticky top-0 z-50">
+        <div class="flex items-center gap-2">
+            <div class="bg-blue-600 p-2 rounded-lg">
+                <i data-lucide="layout-grid" class="text-white"></i>
+            </div>
+            <span class="font-bold text-xl tracking-tight">PersonalManager</span>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Theme Selector -->
+            <div class="flex gap-1 border-r pr-4 border-gray-300 dark:border-gray-700">
+                <button onclick="setTheme('light')" class="btn-theme" title="Light"><i data-lucide="sun" class="w-5 h-5"></i></button>
+                <button onclick="setTheme('dark')" class="btn-theme" title="Dark"><i data-lucide="moon" class="w-5 h-5"></i></button>
+                <button onclick="setTheme('solarized')" class="btn-theme" title="Solarized"><i data-lucide="palette" class="w-5 h-5"></i></button>
+                <button onclick="setTheme('cyberpunk')" class="btn-theme" title="Cyberpunk"><i data-lucide="zap" class="w-5 h-5"></i></button>
+                <button onclick="setTheme('matrix')" class="btn-theme" title="Matrix"><i data-lucide="terminal" class="w-5 h-5"></i></button>
+                <button onclick="setTheme('dracula')" class="btn-theme" title="Dracula"><i data-lucide="ghost" class="w-5 h-5"></i></button>
+            </div>
+            
+            <button onclick="handleLogout()" class="flex items-center gap-2 text-red-500 hover:text-red-700 font-medium">
+                <span>Sair</span>
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <main id="app-container" class="flex-grow p-4 md:p-8 max-w-7xl mx-auto w-full">
+        <!-- Dashboard View -->
+        <div id="view-dashboard">
+            <!-- Projetos Ativos -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i data-lucide="play-circle" class="text-blue-500"></i> Projetos Ativos
+                </h2>
+                <div id="list-active-projects" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Dinâmico -->
+                </div>
+            </section>
+
+            <!-- Cards de Configuração -->
+            <section class="mb-12">
+                <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <i data-lucide="settings-2" class="text-gray-500"></i> O que deseja planejar?
+                </h2>
+                <div id="config-cards" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- Dinâmico -->
+                </div>
+            </section>
+
+            <!-- Projetos Inativos -->
+            <section class="mt-12 opacity-75 border-t pt-8">
+                <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+                    <i data-lucide="archive" class="text-gray-400"></i> Histórico / Inativos
+                </h2>
+                <div id="list-inactive-projects" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dinâmico -->
+                </div>
+            </section>
+        </div>
+
+        <!-- Details View (Mudança) -->
+        <div id="view-details" class="hidden">
+            <button onclick="showDashboard()" class="mb-6 flex items-center gap-2 text-blue-500 hover:underline">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Voltar ao Dashboard
+            </button>
+
+            <div id="project-header-info" class="card rounded-2xl p-6 mb-8 shadow-lg">
+                <!-- Info do projeto injetada aqui -->
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Formulário -->
+                <div class="lg:col-span-1">
+                    <div class="card rounded-xl p-6 sticky top-24">
+                        <h3 class="text-lg font-bold mb-4">Adicionar Novo Item</h3>
+                        <form id="form-new-item" onsubmit="handleItemSubmit(event)">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm mb-1 opacity-70">Descrição</label>
+                                    <input type="text" id="item-name" required class="w-full p-2 rounded bg-transparent border border-gray-500 focus:border-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm mb-1 opacity-70">Valor (R$)</label>
+                                    <input type="number" step="0.01" id="item-value" required class="w-full p-2 rounded bg-transparent border border-gray-500 focus:border-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm mb-1 opacity-70">Categoria</label>
+                                    <select id="item-category" class="w-full p-2 rounded bg-transparent border border-gray-500 focus:border-blue-500 outline-none">
+                                        <option value="antigo">Casa Antiga (Saindo)</option>
+                                        <option value="novo">Casa Nova (Indo)</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">
+                                    Adicionar Item
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Listagens -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div>
+                        <h4 class="text-xl font-bold mb-4 flex items-center gap-2 border-b pb-2">
+                             <i data-lucide="home"></i> Casa Nova
+                        </h4>
+                        <div id="list-items-novo" class="space-y-3"></div>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold mb-4 flex items-center gap-2 border-b pb-2">
+                             <i data-lucide="door-closed"></i> Casa Antiga
+                        </h4>
+                        <div id="list-items-antigo" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modais -->
+    <div id="modal-project" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="modal-title" class="text-xl font-bold">Novo Projeto</h2>
+                <button onclick="closeModal('modal-project')"><i data-lucide="x"></i></button>
+            </div>
+            <form id="form-project" onsubmit="saveProject(event)">
+                <input type="hidden" id="project-config-id">
+                <input type="hidden" id="project-type">
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm mb-1">Título / Descrição</label>
+                        <input type="text" id="p-title" required class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800 border border-gray-600 uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">Data</label>
+                        <input type="date" id="p-date" required class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800 border border-gray-600">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">Orçamento Previsto (R$)</label>
+                        <input type="number" step="0.01" id="p-budget" required class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800 border border-gray-600">
+                    </div>
+
+                    <div id="fields-mudanca" class="hidden space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm mb-1">Imóvel Atual</label>
+                                <select id="p-oldHome" class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800 border border-gray-600">
+                                    <option value="Apartamento">Apartamento</option>
+                                    <option value="Casa">Casa</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm mb-1">Imóvel Novo</label>
+                                <select id="p-newHome" class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800 border border-gray-600">
+                                    <option value="Apartamento">Apartamento</option>
+                                    <option value="Casa">Casa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mt-4">Salvar Projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Valor Item -->
+    <div id="modal-edit-item" class="modal">
+        <div class="modal-content">
+            <h2 class="text-xl font-bold mb-4">Editar Item</h2>
+            <form id="form-edit-item" onsubmit="saveEditItem(event)">
+                <input type="hidden" id="edit-item-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm mb-1">Valor Atualizado</label>
+                        <input type="number" step="0.01" id="edit-item-value" required class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800">
+                    </div>
+                    <div>
+                        <label class="block text-sm mb-1">Comentário / Descrição</label>
+                        <textarea id="edit-item-desc" class="w-full p-2 rounded bg-gray-100 dark:bg-gray-800"></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" onclick="closeModal('modal-edit-item')" class="flex-1 p-2 bg-gray-500 text-white rounded">Cancelar</button>
+                        <button type="submit" class="flex-1 p-2 bg-blue-600 text-white rounded">Salvar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RODAPÉ -->
+    <footer class="p-8 text-center border-t mt-auto text-sm opacity-60">
+        <p>Desenvolvido por Daniel Aleixo Correa &copy; 2026</p>
+        <p>Lins, SP - Sistema inteligente para gerenciamento pessoal e planejamento financeiro.</p>
+    </footer>
+
+    <script>
+        // CONFIGURAÇÕES API
+        const BASE_API = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === ""
+            ? "http://localhost:8080/api"
+            : "https://mudanca-ap.onrender.com/api";
+
+        let currentProject = null;
+
+        // HELPER PARA ICONES (Segurança para o erro 'lucide is not defined')
+        const refreshIcons = () => {
+            if (window.lucide) {
+                window.lucide.createIcons();
+            }
+        };
+
+        // AUTH & HEADERS
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        const handleLogout = () => {
+            localStorage.removeItem('auth_token');
+            window.location.href = 'index.html';
+        };
+
+        // UI LOADER
+        const showLoader = (show) => {
+            document.getElementById('global-loader').style.display = show ? 'grid' : 'none';
+        };
+
+        // REQUEST WRAPPER
+        async function apiRequest(endpoint, method = 'GET', body = null) {
+            showLoader(true);
+            try {
+                const options = {
+                    method,
+                    headers: getHeaders()
+                };
+                if (body) options.body = JSON.stringify(body);
+
+                const response = await fetch(`${BASE_API}${endpoint}`, options);
+                
+                if (response.status === 403) {
+                    handleLogout();
+                    return;
+                }
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Erro na requisição');
+                }
+
+                return await response.json();
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        // TEMA
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('user-theme', theme);
+        }
+
+        // INITIAL LOAD
+        window.onload = () => {
+            // Garante que o lucide existe antes de chamar
+            refreshIcons();
+            const savedTheme = localStorage.getItem('user-theme') || 'light';
+            setTheme(savedTheme);
+            loadDashboard();
+        };
+
+        // CARGA DO DASHBOARD
+        async function loadDashboard() {
+            // 1. Buscar Configurações
+            const configs = await apiRequest('/project/config/all') || [];
+            const configGrid = document.getElementById('config-cards');
+            configGrid.innerHTML = '';
+            configs.filter(c => c.active).forEach(conf => {
+                const card = document.createElement('div');
+                card.className = 'card rounded-xl p-6 text-center cursor-pointer flex flex-col items-center justify-center';
+                card.onclick = () => openProjectModal(conf);
+                card.innerHTML = `
+                    <div class="text-blue-500 mb-4 bg-blue-100 p-4 rounded-full">
+                        <i data-lucide="${conf.icon || 'star'}" class="w-8 h-8"></i>
+                    </div>
+                    <h3 class="font-bold text-lg">${conf.label}</h3>
+                    <p class="text-xs opacity-60">${conf.subtitle || ''}</p>
+                `;
+                configGrid.appendChild(card);
+            });
+
+            // 2. Buscar Projetos do Usuário
+            const projects = await apiRequest('/project/projects') || [];
+            renderProjects(projects);
+            refreshIcons();
+        }
+
+        function renderProjects(projects) {
+            const activeList = document.getElementById('list-active-projects');
+            const inactiveList = document.getElementById('list-inactive-projects');
+            activeList.innerHTML = '';
+            inactiveList.innerHTML = '';
+
+            projects.forEach(p => {
+                const isInactive = p.status === 'inactive';
+                const container = isInactive ? inactiveList : activeList;
+                const card = document.createElement('div');
+                card.className = `card rounded-xl overflow-hidden flex flex-col`;
+                
+                card.innerHTML = `
+                    <div class="p-5 flex-grow">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-xs font-bold px-2 py-1 rounded bg-blue-100 text-blue-700 uppercase">
+                                ${p.type}
+                            </span>
+                            <button onclick="toggleProjectStatus('${p._id}', '${isInactive ? 'active' : 'inactive'}')" class="text-gray-400 hover:text-red-500 transition">
+                                <i data-lucide="${isInactive ? 'rotate-ccw' : 'trash-2'}" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                        <h3 class="font-bold text-lg mb-1">${p.title}</h3>
+                        <p class="text-sm opacity-60 mb-4">${new Date(p.date).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div class="bg-black/5 p-3 mt-auto">
+                        <button onclick="enterProject('${p._id}')" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded text-sm transition">
+                            Entrar
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // MODAIS DE PROJETO
+        function openProjectModal(config) {
+            const modal = document.getElementById('modal-project');
+            document.getElementById('project-config-id').value = config._id;
+            document.getElementById('project-type').value = config.type;
+            document.getElementById('modal-title').innerText = `Novo Planejamento: ${config.label}`;
+            
+            // Toggle campos específicos
+            document.getElementById('fields-mudanca').style.display = config.type === 'mudanca' ? 'block' : 'none';
+            
+            modal.style.display = 'flex';
+            refreshIcons();
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        async function saveProject(e) {
+            e.preventDefault();
+            const type = document.getElementById('project-type').value;
+            const data = {
+                id: document.getElementById('project-config-id').value,
+                type: type,
+                title: document.getElementById('p-title').value.toUpperCase(),
+                date: document.getElementById('p-date').value,
+                status: "active",
+                extras: {
+                    budget: parseFloat(document.getElementById('p-budget').value)
+                }
+            };
+
+            if (type === 'mudanca') {
+                data.extras.oldHome = document.getElementById('p-oldHome').value;
+                data.extras.newHome = document.getElementById('p-newHome').value;
+            }
+
+            await apiRequest('/project/projects', 'POST', data);
+            closeModal('modal-project');
+            document.getElementById('form-project').reset();
+            loadDashboard();
+        }
+
+        async function toggleProjectStatus(id, newStatus) {
+            await apiRequest(`/project/projects/${id}`, 'PATCH', { status: newStatus });
+            loadDashboard();
+        }
+
+        // TELA DE DETALHES (MUDANÇA)
+        async function enterProject(projectId) {
+            const projects = await apiRequest('/project/projects') || [];
+            currentProject = projects.find(p => p._id === projectId);
+            
+            if (!currentProject) return;
+
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-details').classList.remove('hidden');
+
+            loadItems();
+        }
+
+        function showDashboard() {
+            document.getElementById('view-dashboard').classList.remove('hidden');
+            document.getElementById('view-details').classList.add('hidden');
+            currentProject = null;
+            loadDashboard();
+        }
+
+        async function loadItems() {
+            const items = await apiRequest(`/api/itens?idProjeto=${currentProject._id}`) || [];
+            
+            // Calcular Orçamento
+            const totalGasto = items.reduce((acc, item) => acc + (parseFloat(item.value) || 0), 0);
+            const saldo = currentProject.extras.budget - totalGasto;
+            const isEstourado = saldo < 0;
+
+            // Barra de Progresso
+            const totalItems = items.length;
+            const completedItems = items.filter(i => i.completed).length;
+            const progresso = totalItems > 0 ? (completedItems / totalItems) * 100 : 0;
+
+            const headerInfo = document.getElementById('project-header-info');
+            headerInfo.innerHTML = `
+                <div class="flex flex-col md:flex-row justify-between gap-6 items-start">
+                    <div>
+                        <h2 class="text-3xl font-black uppercase mb-1">${currentProject.title}</h2>
+                        <p class="opacity-60 flex items-center gap-1"><i data-lucide="calendar" class="w-4 h-4"></i> ${new Date(currentProject.date).toLocaleDateString('pt-BR')}</p>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 w-full md:w-auto">
+                        <div class="text-center p-3 border rounded-xl">
+                            <span class="text-xs block opacity-60">Total Planejado</span>
+                            <span class="text-xl font-bold">${formatMoney(currentProject.extras.budget)}</span>
+                        </div>
+                        <div class="text-center p-3 border rounded-xl ${isEstourado ? 'bg-red-500 text-white border-red-500' : 'bg-green-500 text-white border-green-500'}">
+                            <span class="text-xs block opacity-80">Saldo Restante</span>
+                            <span class="text-xl font-bold">${formatMoney(saldo)}</span>
+                            ${isEstourado ? '<p class="text-[10px] mt-1 font-bold">ORÇAMENTO ESTOURADO!</p>' : ''}
+                        </div>
+                        <div class="col-span-2 md:col-span-1 text-center p-3 border rounded-xl">
+                            <span class="text-xs block opacity-60">Progresso</span>
+                            <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2 dark:bg-gray-700">
+                                <div class="bg-blue-600 h-2.5 rounded-full transition-all" style="width: ${progresso}%"></div>
+                            </div>
+                            <span class="text-[10px] mt-1 block">${completedItems}/${totalItems} itens</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Render Listas
+            renderItemList('novo', items.filter(i => i.category === 'novo'));
+            renderItemList('antigo', items.filter(i => i.category === 'antigo'));
+            refreshIcons();
+        }
+
+        function renderItemList(cat, items) {
+            const container = document.getElementById(`list-items-${cat}`);
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                container.innerHTML = '<p class="text-sm opacity-50 italic py-4">Nenhum item adicionado.</p>';
+                return;
+            }
+
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'card p-4 rounded-lg flex justify-between items-center';
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleItemComplete('${item._id}', ${!item.completed})" class="p-1 rounded transition ${item.completed ? 'text-green-500 bg-green-100' : 'text-gray-300 hover:text-green-400'}">
+                            <i data-lucide="${item.completed ? 'check-circle-2' : 'circle'}" class="w-6 h-6"></i>
+                        </button>
+                        <div>
+                            <p class="font-bold ${item.completed ? 'line-through opacity-50' : ''}">${item.name}</p>
+                            <p class="text-xs text-blue-500 font-mono">${formatMoney(item.value)}</p>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="openEditItemModal('${item._id}', ${item.value}, '${item.description || ''}')" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="deleteItem('${item._id}')" class="p-2 hover:bg-red-100 text-red-400 rounded">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function handleItemSubmit(e) {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('item-name').value,
+                idProjeto: currentProject._id,
+                value: parseFloat(document.getElementById('item-value').value),
+                category: document.getElementById('item-category').value
+            };
+
+            await apiRequest('/api/itens', 'POST', data);
+            document.getElementById('form-new-item').reset();
+            loadItems();
+        }
+
+        async function toggleItemComplete(id, completed) {
+            await apiRequest(`/itens/${id}/completed`, 'PATCH', { completed });
+            loadItems();
+        }
+
+        async function deleteItem(id) {
+            if (confirm('Deseja realmente excluir este item?')) {
+                await apiRequest(`/itens/${id}`, 'DELETE');
+                loadItems();
+            }
+        }
+
+        function openEditItemModal(id, value, desc) {
+            document.getElementById('edit-item-id').value = id;
+            document.getElementById('edit-item-value').value = value;
+            document.getElementById('edit-item-desc').value = desc;
+            document.getElementById('modal-edit-item').style.display = 'flex';
+        }
+
+        async function saveEditItem(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-item-id').value;
+            const data = {
+                value: parseFloat(document.getElementById('edit-item-value').value),
+                description: document.getElementById('edit-item-desc').value
+            };
+
+            await apiRequest(`/itens/${id}/value`, 'PATCH', data);
+            closeModal('modal-edit-item');
+            loadItems();
+        }
+
+        // HELPERS
+        function formatMoney(val) {
+            return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val || 0);
+        }
+
+        function showToast(msg, type = 'info') {
+            console.log(`[${type}] ${msg}`);
+            if (type === 'error') {
+                const div = document.createElement('div');
+                div.className = "fixed bottom-4 right-4 bg-red-600 text-white p-4 rounded-lg shadow-xl z-[9999] flex items-center gap-2 animate-bounce";
+                div.innerHTML = `<i data-lucide="alert-triangle"></i> <span>${msg}</span>`;
+                document.body.appendChild(div);
+                refreshIcons();
+                setTimeout(() => div.remove(), 5000);
+            }
+        }
+
+    </script>
+</body>
+</html>

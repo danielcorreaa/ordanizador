@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-pt" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projetos - Sistema de Gestão</title>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Definição de Temas */
+        :root {
+            --bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --text: #1f2937;
+            --primary: #3b82f6;
+            --border: #e5e7eb;
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --bg: #111827;
+            --card-bg: #1f2937;
+            --text: #f9fafb;
+            --primary: #60a5fa;
+            --border: #374151;
+        }
+
+        [data-theme="solarized"] {
+            --bg: #002b36;
+            --card-bg: #073642;
+            --text: #839496;
+            --primary: #268bd2;
+            --border: #586e75;
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg: #000b1e;
+            --card-bg: #001633;
+            --text: #00ff9f;
+            --primary: #ff003c;
+            --border: #ff003c;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        [data-theme="matrix"] {
+            --bg: #000000;
+            --card-bg: #000000;
+            --text: #00ff41;
+            --primary: #008f11;
+            --border: #00ff41;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        [data-theme="barbie"] {
+            --bg: #fce4ec;
+            --card-bg: #ffffff;
+            --text: #ad1457;
+            --primary: #e91e63;
+            --border: #f8bbd0;
+        }
+
+        [data-theme="dracula"] {
+            --bg: #282a36;
+            --card-bg: #44475a;
+            --text: #f8f8f2;
+            --primary: #bd93f9;
+            --border: #6272a4;
+        }
+
+        [data-theme="ms-dos"] {
+            --bg: #000000;
+            --card-bg: #000000;
+            --text: #ffffff;
+            --primary: #ffffff;
+            --border: #ffffff;
+            --font-main: 'Consolas', 'Courier New', monospace;
+        }
+
+        [data-theme="windows-old"] {
+            --bg: #008080;
+            --card-bg: #c0c0c0;
+            --text: #000000;
+            --primary: #000080;
+            --border: #ffffff;
+            --font-main: 'MS Sans Serif', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            transition: all 0.3s ease;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        [data-theme="windows-old"] .card {
+            border-top: 2px solid #fff;
+            border-left: 2px solid #fff;
+            border-right: 2px solid #808080;
+            border-bottom: 2px solid #808080;
+            border-radius: 0;
+            box-shadow: none;
+        }
+
+        [data-theme="ms-dos"] .card {
+            border: 1px solid #fff;
+            border-radius: 0;
+        }
+
+        .theme-btn {
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+
+        .theme-btn:hover { transform: scale(1.1); }
+
+        .modal {
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            position: fixed;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        .modal.active { display: flex; }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary { background-color: var(--primary); color: #fff; }
+        
+        [data-theme="ms-dos"] .btn { border: 1px solid #fff; background: #000; color: #fff; }
+        [data-theme="windows-old"] .btn { 
+            background: #c0c0c0; 
+            border-top: 2px solid #fff; 
+            border-left: 2px solid #fff; 
+            border-right: 2px solid #808080; 
+            border-bottom: 2px solid #808080;
+            color: #000;
+        }
+
+        .budget-alert {
+            background-color: #ef4444 !important;
+            color: white !important;
+        }
+
+        .item-done {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        #view-details { display: none; }
+
+        /* Estilos de Impressão (Relatório PDF) */
+        @media print {
+            header, #theme-selector, #add-item-container, .btn, button, .modal, .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white !important;
+                color: black !important;
+                padding: 0 !important;
+            }
+            .card {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                margin-bottom: 20px !important;
+                break-inside: avoid;
+            }
+            #view-details {
+                display: block !important;
+            }
+            .grid {
+                display: block !important;
+            }
+            .item-done {
+                opacity: 1 !important;
+                color: #666 !important;
+            }
+            footer {
+                border-top: 1px solid #ccc !important;
+                color: black !important;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- Cabeçalho e Seletor de Temas -->
+    <header class="max-w-6xl w-full mx-auto mb-8 flex flex-col md:flex-row justify-between items-center gap-6 no-print">
+        <div class="flex flex-col md:flex-row items-center gap-6">
+            <h1 class="text-3xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-folder-tree text-[var(--primary)]"></i> Projetos
+            </h1>
+            
+            <!-- Informações do Utilizador -->
+            <div class="flex items-center gap-3 border-l pl-6 border-[var(--border)]">
+                <div class="w-10 h-10 rounded-full bg-[var(--primary)] flex items-center justify-center text-white overflow-hidden border-2 border-[var(--border)]">
+                    <i class="fa-solid fa-user text-lg"></i>
+                </div>
+                <div class="flex flex-col">
+                    <span class="text-sm font-bold leading-none">Daniel Aleixo Correa</span>
+                    <span class="text-xs opacity-60">daniel.cor@outlook.com</span>
+                </div>
+                <button onclick="logout()" title="Sair do Sistema" class="ml-4 p-2 opacity-50 hover:opacity-100 hover:text-red-500 transition-all">
+                    <i class="fa-solid fa-right-from-bracket text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 justify-center" id="theme-selector">
+            <div class="theme-btn" onclick="setTheme('light')" title="Light" style="background: #fff; color: #333"><i class="fa-solid fa-sun"></i></div>
+            <div class="theme-btn" onclick="setTheme('dark')" title="Dark" style="background: #333; color: #fff"><i class="fa-solid fa-moon"></i></div>
+            <div class="theme-btn" onclick="setTheme('solarized')" title="Solarized" style="background: #073642; color: #268bd2"><i class="fa-solid fa-leaf"></i></div>
+            <div class="theme-btn" onclick="setTheme('cyberpunk')" title="Cyberpunk" style="background: #ff003c; color: #00ff9f"><i class="fa-solid fa-bolt"></i></div>
+            <div class="theme-btn" onclick="setTheme('matrix')" title="Matrix" style="background: #000; color: #00ff41"><i class="fa-solid fa-code"></i></div>
+            <div class="theme-btn" onclick="setTheme('barbie')" title="Barbie" style="background: #e91e63; color: #fff"><i class="fa-solid fa-venus"></i></div>
+            <div class="theme-btn" onclick="setTheme('dracula')" title="Dracula" style="background: #6272a4; color: #bd93f9"><i class="fa-solid fa-ghost"></i></div>
+            <div class="theme-btn" onclick="setTheme('ms-dos')" title="MS-DOS" style="background: #000; color: #fff; border: 1px solid #fff">C:\</div>
+            <div class="theme-btn" onclick="setTheme('windows-old')" title="Win 95" style="background: #c0c0c0; color: #000"><i class="fa-brands fa-windows"></i></div>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal: Vista de Listagem -->
+    <main id="view-list" class="max-w-6xl w-full mx-auto flex-grow">
+        <section class="mb-12">
+            <h2 class="text-xl font-semibold mb-4 border-b pb-2">Projetos Ativos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="active-projects-list"></div>
+        </section>
+
+        <section class="mb-12">
+            <h2 class="text-xl font-semibold mb-4 opacity-80">Novo Projeto</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="project-types-container"></div>
+        </section>
+
+        <section class="mb-20">
+            <h2 class="text-xl font-semibold mb-4 opacity-60 border-b pb-2">Projetos Inativos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-60" id="inactive-projects-list"></div>
+        </section>
+    </main>
+
+    <!-- Vista Detalhada -->
+    <main id="view-details" class="max-w-6xl w-full mx-auto flex-grow">
+        <div class="flex flex-col md:flex-row justify-between items-start mb-4 no-print gap-4">
+            <button onclick="showListView()" class="flex items-center gap-2 hover:underline cursor-pointer">
+                <i class="fa-solid fa-arrow-left"></i> Voltar para a lista
+            </button>
+            <button onclick="generateReport()" class="btn bg-gray-800 text-white flex items-center gap-2">
+                <i class="fa-solid fa-file-pdf"></i> Gerar Relatório PDF
+            </button>
+        </div>
+
+        <div id="project-header" class="card mb-8"></div>
+
+        <!-- Formulário para Adicionar Item -->
+        <div class="mb-8 card no-print" id="add-item-container">
+            <h3 class="text-lg font-bold mb-4">Adicionar Novo Item</h3>
+            <div class="flex flex-wrap gap-4 items-end">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm mb-1">Descrição</label>
+                    <input type="text" id="item-name" class="w-full p-2 border rounded bg-transparent">
+                </div>
+                <div class="w-32">
+                    <label class="block text-sm mb-1">Valor (€)</label>
+                    <input type="number" id="item-value" value="0" step="0.01" class="w-full p-2 border rounded bg-transparent">
+                </div>
+                <div class="w-48">
+                    <label class="block text-sm mb-1">Categoria</label>
+                    <select id="item-category" class="w-full p-2 border rounded bg-transparent"></select>
+                </div>
+                <button onclick="addItemToProject()" class="btn btn-primary">Adicionar</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+            <div id="column-a" class="card flex flex-col gap-4"></div>
+            <div id="column-b" class="card flex flex-col gap-4"></div>
+        </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="max-w-6xl w-full mx-auto mt-12 py-8 border-t border-[var(--border)] text-center opacity-60">
+        <div class="flex flex-col gap-1">
+            <p class="font-bold">Daniel Aleixo Correa</p>
+            <p class="text-sm">
+                <i class="fa-regular fa-envelope mr-1"></i> daniel.cor@outlook.com
+            </p>
+            <p class="text-xs mt-2 italic">Desenvolvido em 2026</p>
+        </div>
+    </footer>
+
+    <!-- Modal para Registo de Projeto -->
+    <div class="modal no-print" id="register-modal">
+        <div class="card w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold mb-4" id="modal-title">Cadastro</h2>
+            <form id="project-form" onsubmit="handleProjectSubmit(event)">
+                <input type="hidden" id="form-type">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1" id="label-title">Título</label>
+                    <input type="text" id="input-title" required class="w-full p-2 border rounded bg-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Data</label>
+                    <input type="date" id="input-date" required class="w-full p-2 border rounded bg-transparent">
+                </div>
+                <div id="extra-fields-container"></div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="closeModal()" class="btn border px-4 py-2">Cancelar</button>
+                    <button type="submit" id="btn-save-project" class="btn btn-primary px-6 py-2">Salvar Projeto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Edição de Item -->
+    <div class="modal no-print" id="edit-item-modal">
+        <div class="card w-full max-w-md mx-4">
+            <h2 class="text-2xl font-bold mb-4">Editar Item</h2>
+            <form id="edit-item-form" onsubmit="handleEditItemSubmit(event)">
+                <input type="hidden" id="edit-item-id">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Descrição</label>
+                    <input type="text" id="edit-item-name" required class="w-full p-2 border rounded bg-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Valor (€)</label>
+                    <input type="number" step="0.01" id="edit-item-value" value="0" required class="w-full p-2 border rounded bg-transparent">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Categoria</label>
+                    <select id="edit-item-category" required class="w-full p-2 border rounded bg-transparent"></select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Comentários / Notas</label>
+                    <textarea id="edit-item-notes" rows="3" class="w-full p-2 border rounded bg-transparent" placeholder="Adicione detalhes adicionais..."></textarea>
+                </div>
+                <div class="flex justify-end gap-2 mt-6">
+                    <button type="button" onclick="closeEditItemModal()" class="btn border px-4 py-2">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-6 py-2">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Variável de Tipos de Projeto (agora carregada via API)
+        let projectTypes = [];
+
+        // Helper para cabeçalhos de autenticação
+        const getHeaders = () => {
+             const token = localStorage.getItem('auth_token');
+             const headers = { 'Content-Type': 'application/json' };
+             if (token) headers['Authorization'] = `Bearer ${token}`;
+             return headers;
+        };
+
+        let userProjects = JSON.parse(localStorage.getItem('userProjects')) || [];
+        let itemsData = JSON.parse(localStorage.getItem('itemsData')) || []; 
+        let currentEditingProject = null;
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('app-theme', theme);
+        }
+
+        async function init() {
+            const savedTheme = localStorage.getItem('app-theme') || 'light';
+            setTheme(savedTheme);
+            await renderProjectTypes(); // Aguarda o carregamento dos tipos
+            await renderUserProjects(); // Aguarda o carregamento dos projetos
+        }
+
+        function logout() {
+            if(confirm("Deseja realmente sair e limpar todos os dados do sistema?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        async function renderProjectTypes() {
+            const container = document.getElementById('project-types-container');
+            if(!container) return;
+
+            // Loader
+            container.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-8 opacity-60">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[var(--primary)] mb-2"></i>
+                    <span class="text-sm">Carregando tipos de projeto...</span>
+                </div>
+            `;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/project/config/all', {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) throw new Error('Falha ao obter tipos de projeto');
+
+                projectTypes = await response.json();
+
+                container.innerHTML = projectTypes.filter(t => t.active).map(type => `
+                    <div class="card cursor-pointer hover:border-primary border-transparent border-2 flex flex-col items-center text-center group" onclick="openRegisterModal('${type.id}')">
+                        <div class="w-16 h-16 rounded-full bg-opacity-10 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform" 
+                             style="background-color: var(--primary)">
+                            <i class="fa-solid ${type.icon}"></i>
+                        </div>
+                        <h3 class="text-lg font-bold">${type.label}</h3>
+                        <p class="text-sm opacity-70">${type.subtitle}</p>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error("Erro ao carregar tipos:", error);
+                container.innerHTML = `
+                    <div class="col-span-full text-center p-6 border-2 border-dashed border-red-300 rounded-lg text-red-500 bg-red-50">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                        <p class="font-bold">Erro de Conexão</p>
+                        <p class="text-sm opacity-80">Não foi possível carregar os tipos de projeto.</p>
+                        <p class="text-xs mt-2 font-mono bg-white p-1 rounded border inline-block">GET /api/project/config/all</p>
+                    </div>
+                `;
+            }
+        }
+
+        function openRegisterModal(typeId) {
+            const type = projectTypes.find(t => t.id === typeId);
+            const modal = document.getElementById('register-modal');
+            const fieldsContainer = document.getElementById('extra-fields-container');
+            
+            document.getElementById('form-type').value = typeId;
+            document.getElementById('modal-title').innerText = `Novo Projeto: ${type.label}`;
+            document.getElementById('label-title').innerText = type.titleLabel;
+            
+            fieldsContainer.innerHTML = type.extraFields.map(field => {
+                const defaultValue = field.type === 'number' ? '0' : '';
+                if(field.type === 'select') {
+                    return `
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1">${field.label}</label>
+                            <select id="extra-${field.id}" required class="w-full p-2 border rounded bg-transparent">
+                                ${field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('')}
+                            </select>
+                        </div>
+                    `;
+                }
+                return `
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-1">${field.label}</label>
+                        <input type="${field.type}" id="extra-${field.id}" required value="${defaultValue}" placeholder="${field.placeholder || ''}" class="w-full p-2 border rounded bg-transparent">
+                    </div>
+                `;
+            }).join('');
+
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('register-modal').classList.remove('active');
+            document.getElementById('project-form').reset();
+            const btn = document.getElementById('btn-save-project');
+            btn.innerHTML = 'Salvar Projeto';
+            btn.disabled = false;
+        }
+
+        async function handleProjectSubmit(e) {
+            e.preventDefault();
+            const typeId = document.getElementById('form-type').value;
+            const typeDef = projectTypes.find(t => t.id === typeId);
+            const btn = document.getElementById('btn-save-project');
+            
+            // Dados do projeto
+            const project = {
+                type: typeId,
+                title: document.getElementById('input-title').value,
+                date: document.getElementById('input-date').value,
+                status: 'active',
+                extras: {}
+            };
+
+            typeDef.extraFields.forEach(f => {
+                const val = document.getElementById(`extra-${f.id}`).value;
+                project.extras[f.id] = f.type === 'number' ? (parseFloat(val) || 0) : val;
+            });
+
+            // Ativar Loader
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Salvando...`;
+
+            try {
+                const response = await fetch('http://localhost:8080/api/project/projects', {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(project)
+                });
+
+                if (!response.ok) throw new Error('Falha ao salvar projeto na API');
+
+                // Recarrega a lista do servidor para garantir sincronia
+                await renderUserProjects();
+                closeModal();
+                
+            } catch (error) {
+                console.error("Erro ao salvar projeto:", error);
+                alert("Não foi possível salvar o projeto. Verifique a conexão com o servidor.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Salvar Projeto';
+            }
+        }
+
+        async function renderUserProjects() {
+            const activeList = document.getElementById('active-projects-list');
+            const inactiveList = document.getElementById('inactive-projects-list');
+            if(!activeList || !inactiveList) return;
+            
+            // Loader
+            activeList.innerHTML = `
+                <div class="col-span-full flex flex-col items-center justify-center py-8 opacity-60">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-[var(--primary)] mb-2"></i>
+                    <span class="text-sm">Carregando projetos...</span>
+                </div>
+            `;
+            inactiveList.innerHTML = '';
+
+            try {
+                const response = await fetch('http://localhost:8080/api/project/projects', {
+                    method: 'GET',
+                    headers: getHeaders()
+                });
+
+                if (!response.ok) throw new Error('Falha ao buscar projetos');
+
+                userProjects = await response.json();
+
+                activeList.innerHTML = '';
+                inactiveList.innerHTML = '';
+
+                if (userProjects.length === 0) {
+                     activeList.innerHTML = `<div class="col-span-full text-center opacity-50 py-8">Nenhum projeto encontrado.</div>`;
+                }
+
+                userProjects.forEach(proj => {
+                    const typeDef = projectTypes.find(t => t.id === proj.type) || { label: 'Desconhecido', icon: 'fa-circle-question' };
+                    
+                    const card = `
+                        <div class="card flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="text-xs uppercase font-bold tracking-widest opacity-50">${typeDef.label}</span>
+                                    <span class="px-2 py-0.5 rounded text-[10px] ${proj.status === 'active' ? 'bg-green-500/20 text-green-500' : 'bg-gray-500/20 text-gray-400'}">
+                                        ${proj.status.toUpperCase()}
+                                    </span>
+                                </div>
+                                <h3 class="text-xl font-bold mb-1">${proj.title}</h3>
+                                <p class="text-sm opacity-70 mb-4"><i class="fa-regular fa-calendar"></i> ${proj.date}</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="enterProject('${proj.id}')" class="btn btn-primary flex-1 text-sm">Entrar</button>
+                                <button onclick="toggleProjectStatus('${proj.id}')" class="btn border border-red-500 text-red-500 hover:bg-red-500 hover:text-white text-sm">
+                                    <i class="fa-solid ${proj.status === 'active' ? 'fa-ban' : 'fa-check'}"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    if(proj.status === 'active') activeList.innerHTML += card;
+                    else inactiveList.innerHTML += card;
+                });
+            } catch (error) {
+                console.error("Erro ao carregar projetos:", error);
+                activeList.innerHTML = `
+                    <div class="col-span-full text-center p-6 border-2 border-dashed border-red-300 rounded-lg text-red-500 bg-red-50">
+                        <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                        <p class="font-bold">Erro de Conexão</p>
+                        <p class="text-sm opacity-80">Não foi possível carregar os projetos.</p>
+                        <p class="text-xs mt-2 font-mono bg-white p-1 rounded border inline-block">GET /api/project/projects</p>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleProjectStatus(id) {
+            const proj = userProjects.find(p => p.id === id);
+            proj.status = proj.status === 'active' ? 'inactive' : 'active';
+            saveData();
+            renderUserProjects();
+        }
+
+        function enterProject(id) {
+            currentEditingProject = userProjects.find(p => p.id === id);
+            document.getElementById('view-list').style.display = 'none';
+            document.getElementById('view-details').style.display = 'block';
+            renderProjectDetails();
+        }
+
+        function showListView() {
+            document.getElementById('view-list').style.display = 'block';
+            document.getElementById('view-details').style.display = 'none';
+            renderUserProjects();
+        }
+
+        function generateReport() {
+            window.print();
+        }
+
+        function renderProjectDetails() {
+            const proj = currentEditingProject;
+            if(!proj) return;
+            const typeDef = projectTypes.find(t => t.id === proj.type) || { label: 'Desconhecido', extraFields: [], categories: [] };
+            const items = itemsData.filter(i => i.idProjeto === proj.id);
+            
+            const totalSpent = items.reduce((sum, item) => sum + parseFloat(item.value || 0), 0);
+            const budget = parseFloat(proj.extras.budget || 0);
+            const remaining = budget - totalSpent;
+            const isOver = remaining < 0;
+
+            const totalItemsCount = items.length;
+            const doneItemsCount = items.filter(i => i.done).length;
+            const taskProgress = totalItemsCount > 0 ? Math.round((doneItemsCount / totalItemsCount) * 100) : 0;
+
+            const header = document.getElementById('project-header');
+            
+            let extrasHtml = '';
+            if(typeDef.extraFields) {
+                typeDef.extraFields.forEach(f => {
+                    if(f.id !== 'budget') {
+                        extrasHtml += `<p class="text-xs opacity-70 uppercase mt-1"><strong>${f.label}:</strong> ${proj.extras[f.id]}</p>`;
+                    }
+                });
+            }
+
+            header.innerHTML = `
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h2 class="text-3xl font-bold">${proj.title}</h2>
+                        <p class="opacity-70">${typeDef.label} • Planeado para ${proj.date}</p>
+                        <div class="mt-2">${extrasHtml}</div>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="text-center px-6 py-2 border-r">
+                            <span class="block text-xs uppercase opacity-50">Budget</span>
+                            <span class="text-xl font-bold">€ ${budget.toLocaleString('pt-PT', {minimumFractionDigits: 2})}</span>
+                        </div>
+                        <div class="text-center px-6 py-2 ${isOver ? 'budget-alert rounded shadow-lg' : ''}">
+                            <span class="block text-xs uppercase opacity-50">Saldo</span>
+                            <span class="text-xl font-bold">€ ${remaining.toLocaleString('pt-PT', {minimumFractionDigits: 2})}</span>
+                            ${isOver ? '<div class="text-[10px] font-bold mt-1 uppercase">Estourado!</div>' : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-6 flex flex-col gap-3">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span>Conclusão de Itens (${doneItemsCount}/${totalItemsCount})</span>
+                            <span class="font-bold">${taskProgress}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 h-3 rounded overflow-hidden">
+                            <div class="bg-green-500 h-full transition-all duration-500" style="width: ${taskProgress}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const catSelect = document.getElementById('item-category');
+            if(typeDef.categories) {
+                catSelect.innerHTML = typeDef.categories.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+                
+                const keys = typeDef.categories.map(c => c.id);
+                const labels = typeDef.categories.map(c => c.label);
+                renderCategoryLists(items, keys, labels);
+            } else {
+                catSelect.innerHTML = '<option value="geral">Geral</option>';
+                renderCategoryLists(items, ['geral'], ['Geral']);
+            }
+        }
+
+        function renderCategoryLists(items, keys, labels) {
+            const colA = document.getElementById('column-a');
+            const colB = document.getElementById('column-b');
+            colA.innerHTML = '';
+            colB.innerHTML = '';
+
+            keys.forEach((key, index) => {
+                const target = index % 2 === 0 ? colA : colB;
+                const filtered = items.filter(i => i.category === key);
+                
+                let html = `
+                    <div class="mb-6">
+                        <h4 class="font-bold border-b mb-3 opacity-60">${labels[index]}</h4>
+                        <div class="flex flex-col gap-2">
+                `;
+
+                if(filtered.length === 0) {
+                    html += `<p class="text-xs italic opacity-40 py-2">Nenhum item registado.</p>`;
+                }
+
+                filtered.forEach(item => {
+                    html += `
+                        <div class="p-3 border rounded bg-black bg-opacity-5 relative flex items-start gap-3 ${item.done ? 'item-done' : ''}">
+                            <div class="mt-1 no-print">
+                                <input type="checkbox" ${item.done ? 'checked' : ''} 
+                                       onchange="toggleItemDone('${item._id}')" 
+                                       class="w-5 h-5 cursor-pointer accent-green-500">
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-medium">${item.done ? '✓ ' : '○ '}${item.name}</span>
+                                    <span class="font-mono font-bold">€ ${parseFloat(item.value || 0).toFixed(2)}</span>
+                                </div>
+                                ${item.notes ? `<p class="text-xs opacity-60 italic mb-2 pr-12">${item.notes}</p>` : ''}
+                                <div class="flex justify-end gap-3 mt-2 no-print">
+                                    <button onclick="openEditItemModal('${item._id}')" class="text-xs text-blue-500 opacity-70 hover:opacity-100 flex items-center gap-1">
+                                        <i class="fa-solid fa-pen"></i> Editar
+                                    </button>
+                                    <button onclick="deleteItem('${item._id}')" class="text-xs text-red-500 opacity-70 hover:opacity-100 flex items-center gap-1">
+                                        <i class="fa-solid fa-trash"></i> Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += `</div></div>`;
+                target.innerHTML += html;
+            });
+        }
+
+        function addItemToProject() {
+            const nameInput = document.getElementById('item-name');
+            const valInput = document.getElementById('item-value');
+            const catInput = document.getElementById('item-category');
+            if(!nameInput.value) return;
+            const newItem = {
+                _id: Date.now().toString(),
+                name: nameInput.value,
+                idProjeto: currentEditingProject.id,
+                value: parseFloat(valInput.value) || 0,
+                category: catInput.value,
+                notes: "",
+                done: false,
+                userId: 'system'
+            };
+            itemsData.push(newItem);
+            saveData();
+            nameInput.value = '';
+            valInput.value = '0';
+            renderProjectDetails();
+        }
+
+        function toggleItemDone(itemId) {
+            const index = itemsData.findIndex(i => i._id === itemId);
+            if(index !== -1) {
+                itemsData[index].done = !itemsData[index].done;
+                saveData();
+                renderProjectDetails();
+            }
+        }
+
+        function openEditItemModal(itemId) {
+            const item = itemsData.find(i => i._id === itemId);
+            const proj = currentEditingProject;
+            const typeDef = projectTypes.find(t => t.id === proj.type);
+            
+            document.getElementById('edit-item-id').value = itemId;
+            document.getElementById('edit-item-name').value = item.name;
+            document.getElementById('edit-item-value').value = item.value || 0;
+            document.getElementById('edit-item-notes').value = item.notes || "";
+            
+            const catSelect = document.getElementById('edit-item-category');
+            if(typeDef && typeDef.categories) {
+                catSelect.innerHTML = typeDef.categories.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+            } else {
+                 catSelect.innerHTML = `<option value="${item.category}">${item.category}</option>`;
+            }
+            catSelect.value = item.category;
+
+            document.getElementById('edit-item-modal').classList.add('active');
+        }
+
+        function closeEditItemModal() {
+            document.getElementById('edit-item-modal').classList.remove('active');
+            document.getElementById('edit-item-form').reset();
+        }
+
+        function handleEditItemSubmit(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-item-id').value;
+            const index = itemsData.findIndex(i => i._id === id);
+            
+            if (index !== -1) {
+                itemsData[index].name = document.getElementById('edit-item-name').value;
+                itemsData[index].value = parseFloat(document.getElementById('edit-item-value').value) || 0;
+                itemsData[index].category = document.getElementById('edit-item-category').value;
+                itemsData[index].notes = document.getElementById('edit-item-notes').value;
+                
+                saveData();
+                closeEditItemModal();
+                renderProjectDetails();
+            }
+        }
+
+        function deleteItem(id) {
+            itemsData = itemsData.filter(i => i._id !== id);
+            saveData();
+            renderProjectDetails();
+        }
+
+        function saveData() {
+            localStorage.setItem('userProjects', JSON.stringify(userProjects));
+            localStorage.setItem('itemsData', JSON.stringify(itemsData));
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

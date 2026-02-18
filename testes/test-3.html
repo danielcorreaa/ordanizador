@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="pt-br" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gerenciamento Pessoal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Definição de Temas Customizados */
+        :root[data-theme="light"] {
+            --bg: #f3f4f6; --card: #ffffff; --text: #1f2937; --primary: #3b82f6; --accent: #e5e7eb;
+        }
+        :root[data-theme="dark"] {
+            --bg: #111827; --card: #1f2937; --text: #f9fafb; --primary: #60a5fa; --accent: #374151;
+        }
+        :root[data-theme="solarized"] {
+            --bg: #fdf6e3; --card: #eee8d5; --text: #073642; --primary: #268bd2; --accent: #93a1a1;
+        }
+        :root[data-theme="cyberpunk"] {
+            --bg: #000b1e; --card: #001631; --text: #00ff9f; --primary: #ff003c; --accent: #05d9e8;
+        }
+        :root[data-theme="matrix"] {
+            --bg: #0d0208; --card: #000000; --text: #00ff41; --primary: #008f11; --accent: #003b00;
+        }
+        :root[data-theme="dracula"] {
+            --bg: #282a36; --card: #44475a; --text: #f8f8f2; --primary: #bd93f9; --accent: #6272a4;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: all 0.3s ease;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .custom-card {
+            background-color: var(--card);
+            border: 1px solid var(--accent);
+            border-radius: 1rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .custom-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary);
+        }
+
+        .loader {
+            border: 4px solid var(--accent);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .modal {
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background-color: var(--card);
+            color: var(--text);
+        }
+
+        .theme-btn {
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .theme-btn:hover { opacity: 0.8; }
+
+        input, select {
+            background-color: var(--bg);
+            border: 1px solid var(--accent);
+            color: var(--text);
+            padding: 0.5rem;
+            border-radius: 0.4rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="p-4 shadow-md flex justify-between items-center" style="background-color: var(--card);">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                <i class="fas fa-layer-group fa-lg"></i>
+            </div>
+            <h1 class="text-xl font-bold tracking-tight">GPESSOAL</h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <!-- Theme Selector -->
+            <div class="flex gap-2 bg-gray-200 dark:bg-gray-700 p-1 rounded-lg" id="theme-selector">
+                <button onclick="setTheme('light')" class="theme-btn" title="Light"><i class="fas fa-sun text-yellow-500"></i></button>
+                <button onclick="setTheme('dark')" class="theme-btn" title="Dark"><i class="fas fa-moon text-gray-400"></i></button>
+                <button onclick="setTheme('solarized')" class="theme-btn" title="Solarized"><i class="fas fa-leaf text-green-600"></i></button>
+                <button onclick="setTheme('cyberpunk')" class="theme-btn" title="Cyberpunk"><i class="fas fa-bolt text-pink-500"></i></button>
+                <button onclick="setTheme('matrix')" class="theme-btn" title="Matrix"><i class="fas fa-code text-green-500"></i></button>
+                <button onclick="setTheme('dracula')" class="theme-btn" title="Dracula"><i class="fas fa-ghost text-purple-500"></i></button>
+            </div>
+
+            <button onclick="logout()" class="flex items-center gap-2 text-red-500 font-semibold hover:bg-red-50 p-2 rounded-lg transition-colors">
+                <span>Sair</span>
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Body -->
+    <main class="flex-grow p-6 md:p-12 container mx-auto">
+        <div id="loader-container" class="hidden flex flex-col items-center justify-center my-20">
+            <div class="loader"></div>
+            <p class="mt-4 font-medium">Carregando dados...</p>
+        </div>
+
+        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Erro:</strong>
+            <span class="block sm:inline" id="error-text">Não foi possível completar a operação.</span>
+        </div>
+
+        <div id="cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Cards will be injected here -->
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="p-6 mt-auto text-center border-t" style="background-color: var(--card); border-color: var(--accent);">
+        <p class="text-sm opacity-75">
+            Sistema para Gerenciamento Pessoal &copy; 2026. <br>
+            Acompanhe seu progresso e organize sua vida em um só lugar. <br>
+            <span class="font-semibold">Desenvolvido por Daniel Aleixo Correa em 2026, Lins - SP.</span>
+        </p>
+    </footer>
+
+    <!-- Modal Mudança -->
+    <div id="modal-mudanca" class="modal fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="modal-content w-full max-w-md p-8 rounded-2xl shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-truck-moving text-blue-500"></i> Nova Mudança
+            </h2>
+            <form id="form-mudanca" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Título/Descrição</label>
+                    <input type="text" id="m-titulo" required class="uppercase" placeholder="EX: MUDANÇA PARA AP NOVO">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Data da Mudança</label>
+                    <input type="date" id="m-data" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Orçamento Previsto (R$)</label>
+                    <input type="number" step="0.01" id="m-orcamento" required placeholder="0,00">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Imóvel Atual</label>
+                        <select id="m-atual" required>
+                            <option value="Apartamento">Apartamento</option>
+                            <option value="Casa">Casa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Imóvel Novo</label>
+                        <select id="m-novo" required>
+                            <option value="Apartamento">Apartamento</option>
+                            <option value="Casa">Casa</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModal('modal-mudanca')" class="px-4 py-2 opacity-70 hover:opacity-100">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Mudança</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Viagem -->
+    <div id="modal-viagem" class="modal fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="modal-content w-full max-w-md p-8 rounded-2xl shadow-2xl">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                <i class="fas fa-plane-departure text-green-500"></i> Nova Viagem
+            </h2>
+            <form id="form-viagem" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Destino</label>
+                    <input type="text" id="v-destino" required class="uppercase" placeholder="EX: RIO DE JANEIRO">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Data da Viagem</label>
+                    <input type="date" id="v-data" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Orçamento (R$)</label>
+                    <input type="number" step="0.01" id="v-orcamento" required placeholder="0,00">
+                </div>
+                <div class="flex justify-end gap-3 mt-8">
+                    <button type="button" onclick="closeModal('modal-viagem')" class="px-4 py-2 opacity-70 hover:opacity-100">Cancelar</button>
+                    <button type="submit" class="btn-primary">Registrar Viagem</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // API Config
+        const BASE_URL = 'http://localhost:8080/api/project';
+        
+        const getHeaders = () => {
+            const token = localStorage.getItem('auth_token');
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            return headers;
+        };
+
+        // UI Helpers
+        const showLoader = (show) => {
+            document.getElementById('loader-container').classList.toggle('hidden', !show);
+        };
+
+        const showError = (message) => {
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-text');
+            errorText.innerText = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        };
+
+        const handleApiError = (response) => {
+            if (response.status === 403) {
+                window.location.href = 'index.html';
+                return;
+            }
+            throw new Error(`Erro na API: ${response.status}`);
+        };
+
+        // Theme Logic
+        const setTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('app_theme', theme);
+        };
+
+        // Auth Logic
+        const logout = () => {
+            localStorage.removeItem('auth_token');
+            window.location.reload();
+        };
+
+        // Modal Logic
+        const openModal = (id) => document.getElementById(id).classList.remove('hidden');
+        const closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+        // Data Fetching
+        async function fetchConfig() {
+            showLoader(true);
+            try {
+                const response = await fetch(`${BASE_URL}/config/all`, { headers: getHeaders() });
+                
+                if (!response.ok) {
+                    handleApiError(response);
+                    return;
+                }
+
+                const data = await response.json();
+                renderCards(data);
+            } catch (error) {
+                showError("Erro ao carregar configurações do sistema.");
+                console.error(error);
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function renderCards(configs) {
+            const grid = document.getElementById('cards-grid');
+            grid.innerHTML = '';
+
+            configs.filter(c => c.active).forEach(config => {
+                const card = document.createElement('div');
+                card.className = 'custom-card p-8 flex flex-col items-center text-center shadow-lg';
+                
+                // Determinando ação baseada no tipo ou label
+                const onClickAction = config.type === 'mudanca' || config.label.toLowerCase().includes('mudança') 
+                    ? "openModal('modal-mudanca')" 
+                    : "openModal('modal-viagem')";
+
+                card.setAttribute('onclick', onClickAction);
+
+                card.innerHTML = `
+                    <div class="mb-4 text-4xl" style="color: var(--primary)">
+                        <i class="${config.icon || 'fas fa-star'}"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 uppercase">${config.label}</h3>
+                    <p class="text-sm opacity-60">${config.subtitle || 'Gerenciar item'}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Persistence Logic
+        async function saveData(payload) {
+            showLoader(true);
+            try {
+                const response = await fetch(`${BASE_URL}/projects`, {
+                    method: 'POST',
+                    headers: getHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    handleApiError(response);
+                    return;
+                }
+
+                const result = await response.json();
+                showError("Dados salvos com sucesso!"); // Usando o mesmo box para sucesso aqui
+                return result;
+            } catch (error) {
+                showError("Não foi possível salvar os dados. Verifique a conexão.");
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        // Form Handlers
+        document.getElementById('form-mudanca').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                id: null, // O backend geralmente gera o ObjectId
+                type: "mudanca",
+                title: document.getElementById('m-titulo').value.toUpperCase(),
+                date: document.getElementById('m-data').value,
+                status: "active",
+                extras: {
+                    budget: parseFloat(document.getElementById('m-orcamento').value),
+                    oldHome: document.getElementById('m-atual').value,
+                    newHome: document.getElementById('m-novo').value
+                }
+            };
+            await saveData(payload);
+            closeModal('modal-mudanca');
+            e.target.reset();
+        };
+
+        document.getElementById('form-viagem').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                id: null,
+                type: "viagem",
+                title: document.getElementById('v-destino').value.toUpperCase(),
+                date: document.getElementById('v-data').value,
+                status: "active",
+                extras: {
+                    budget: parseFloat(document.getElementById('v-orcamento').value)
+                }
+            };
+            await saveData(payload);
+            closeModal('modal-viagem');
+            e.target.reset();
+        };
+
+        // Initialize
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('app_theme') || 'light';
+            setTheme(savedTheme);
+            fetchConfig();
+        };
+    </script>
+</body>
+</html>
